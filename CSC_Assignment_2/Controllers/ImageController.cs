@@ -17,22 +17,22 @@ namespace CSC_Assignment_2.Controllers
         // POST: /api/Image/UploadProfilePic
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public string UploadProfilePic([FromBody]ImageModel imageModel)
+        public async Task<string> UploadProfilePicAsync([FromBody]ImageModel imageModel)
         {
             BlobServices blobService = new BlobServices();
-            return blobService.UploadImageToBlobStorage(Convert.FromBase64String(imageModel.base64), imageModel.userId);
+            return await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(imageModel.base64), imageModel.userId);
         }
 
         // POST: /api/Image/UploadMultiplePic
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public List<string> UploadMultiplePic(ImageModel imageModel)
+        public async Task<List<string>> UploadMultiplePicAsync(ImageModel imageModel)
         {
             BlobServices blobService = new BlobServices();
             List<string> uploadedUri = new List<string>();
 
             foreach (var image in imageModel.ListOfBase64) {
-                uploadedUri.Add(blobService.UploadImageToBlobStorage(Convert.FromBase64String(image), imageModel.userId));
+                uploadedUri.Add(await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(image), imageModel.userId));
             }
             return uploadedUri;
 

@@ -137,7 +137,7 @@ namespace CSC_Assignment_2.Controllers
                         if (roleResult.Succeeded)
                         {
                             BlobServices bs = new BlobServices();
-                            user.ProfilePictureImage = bs.UploadImageToBlobStorage(Convert.FromBase64String(model.ProfilePictureImage), user.Id);
+                            user.ProfilePictureImage = await bs.UploadImageToBlobStorageAsync(Convert.FromBase64String(model.ProfilePictureImage), user.Id);
                             await _userManager.UpdateAsync(user);
 
                             _logger.LogInformation(3, "User created a new account with password.");

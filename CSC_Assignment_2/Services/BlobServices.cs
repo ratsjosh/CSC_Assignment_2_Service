@@ -24,15 +24,15 @@ namespace CSC_Assignment_2.Services
             client.DefaultRequestOptions.ParallelOperationThreadCount = Environment.ProcessorCount;
         }
 
-        public string UploadImageToBlobStorage(Byte[] imageByte, string containerName)
+        public async Task<string> UploadImageToBlobStorageAsync(Byte[] imageByte, string containerName)
         {
             CloudBlobContainer c = client.GetContainerReference(containerName);
-            c.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Off});
-            c.CreateIfNotExistsAsync();
+            await c.CreateIfNotExistsAsync();
+            await c.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
 
             ICloudBlob blob = c.GetBlockBlobReference(Guid.NewGuid().ToString());
             blob.StreamWriteSizeInBytes = 1048576;
-            blob.UploadFromByteArrayAsync(imageByte, 0, imageByte.Length);
+            await blob.UploadFromByteArrayAsync(imageByte, 0, imageByte.Length);
             return blob.Uri.AbsoluteUri;
         }
 
