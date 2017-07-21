@@ -24,25 +24,27 @@ Web Services serves as a middle tier between the clients and the database server
 
 The following are the major Web services:
 
-1. Register Web Service
+1. Register Web Service - Joshua
 The Register Web Service allowed users to register and update their personal particular using Azure SQL service.
 
 Additional features: GOOGLE sign up and Login
 
-2. Email Web Service(SOAP)
+2. Email Web Service(SOAP) - Zaki
 The Email Web Service is to email the members the hyperlink for the registration or image uploaded. Refer to practical 5
 
-3. Image Web Service
-The Image Cloud Web Service will allow user to view and upload the photos using Azure BLOB service. Refer to practical 7 and practical  9
+3. Image Web Service - Zaki
+The Image Cloud Web Service will allow user to view and upload the photos using Azure BLOB service. Refer to practical 7 and practical 9 
 
-4. Captcha Web service
-The Captcha web service is used to generate image containing characters. When a user is posting the question and answers, the web service is used to verify that the user is human.
+4. Captcha Web service - Joshua
+The Captcha web service is used to generate image containing characters. When a user is posting the question and answers, the web service is used to verify that the user is human. 
 Read more on http://en.wikipedia.org/wiki/Captcha
 
-5. Talents web service to manage talents resources.
+5. Talents web service to manage talents resources. - Joshua & Zaki
 Supports CRUD operations. Secured using SSL and Token.
-Model validation (Regular expression needs to be used)
+Model validation (Regular expression needs to be used) 
 
-6. Store session status in NOSQL (DynamoDB)
+6. Store session status in NOSQL (DynamoDB) - Joshua
 
 	To get started, please refer to Appendix D
+	
+7. Payment for talent search (Stripe) - Zaki
