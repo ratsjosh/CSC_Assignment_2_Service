@@ -19,7 +19,7 @@ namespace CSC_Assignment_2.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public List<ApplicationRoleListViewModel> GetAll()
 
         {
             List<ApplicationRoleListViewModel> model = new List<ApplicationRoleListViewModel>();
@@ -30,11 +30,11 @@ namespace CSC_Assignment_2.Controllers
                 Description = r.Description,
                 NumberOfUsers = r.Users.Count
             }).ToList();
-            return View(model);
+            return model;
         }
 
         [HttpGet]
-        public async Task<IActionResult> AddEditApplicationRole(string id)
+        public async Task<ApplicationRoleViewModel> AddEditApplicationRole(string id)
         {
             ApplicationRoleViewModel model = new ApplicationRoleViewModel();
             if (!String.IsNullOrEmpty(id))
@@ -47,11 +47,11 @@ namespace CSC_Assignment_2.Controllers
                     model.Description = applicationRole.Description;
                 }
             }
-            return PartialView("_AddEditApplicationRole", model);
+            return model;
         }
 
         [HttpGet]
-        public async Task<IActionResult> DeleteApplicationRole(string id)
+        public async Task<string> DeleteApplicationRole(string id)
         {
             string name = string.Empty;
             if (!String.IsNullOrEmpty(id))
@@ -62,7 +62,7 @@ namespace CSC_Assignment_2.Controllers
                     name = applicationRole.Name;
                 }
             }
-            return PartialView("_DeleteApplicationRole", name);
+            return name;
         }
 
         [HttpPost]
@@ -76,11 +76,11 @@ namespace CSC_Assignment_2.Controllers
                     IdentityResult roleRuslt = roleManager.DeleteAsync(applicationRole).Result;
                     if (roleRuslt.Succeeded)
                     {
-                        return RedirectToAction("Index");
+                        return Ok(new { Success = false, message = "Successfully delete application role" });
                     }
                 }
             }
-            return View();
+            return BadRequest(new { Success = false, message = "Failed to delete application role" });
         }
 
         [HttpPost]
@@ -99,12 +99,13 @@ namespace CSC_Assignment_2.Controllers
                 applicationRole.IPAddress = Request.HttpContext.Connection.RemoteIpAddress.ToString();
                 IdentityResult roleRuslt = isExist ? await roleManager.UpdateAsync(applicationRole)
                                                     : await roleManager.CreateAsync(applicationRole);
+
                 if (roleRuslt.Succeeded)
                 {
-                    return RedirectToAction("Index");
+                    return Ok(new { Success = false, message = "Successfully Add/Edit application role" });
                 }
             }
-            return View(model);
+            return BadRequest(new { Success = false, message = "Failed to Add/Edit application role" });
         }
 
     }
