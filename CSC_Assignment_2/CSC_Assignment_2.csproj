@@ -11,10 +11,6 @@
   <PropertyGroup>
     <UserSecretsId>aspnet-CSC_Assignment_2-16af7b78-16b8-49f2-a601-0124f331ce46</UserSecretsId>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include="wwwroot\js\application-role-index.js" />
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.0.0" />
     <PackageReference Include="Microsoft.AspNetCore" Version="1.1.2" />

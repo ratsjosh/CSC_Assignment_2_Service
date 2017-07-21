@@ -1,4 +1,5 @@
-﻿using Microsoft.WindowsAzure.Storage;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System;
@@ -16,7 +17,9 @@ namespace CSC_Assignment_2.Services
         private CloudBlobClient client { get; set; }
 
         public BlobServices() {
-            var creds = new StorageCredentials(ApplicationSettings.GetString("BlobAccountName"), ApplicationSettings.GetString("BlobKey"));
+            string BlobAccountName = Startup.Configuration.GetConnectionString("BlobAccountName");
+            string BlobKey = Startup.Configuration.GetConnectionString("BlobKey");
+            var creds = new StorageCredentials(BlobAccountName, BlobKey);
             client = new CloudStorageAccount(creds, true).CreateCloudBlobClient();
             client.DefaultRequestOptions.ParallelOperationThreadCount = Environment.ProcessorCount;
         }
@@ -24,7 +27,7 @@ namespace CSC_Assignment_2.Services
         public string UploadImageToBlobStorage(Byte[] imageByte, string containerName)
         {
             CloudBlobContainer c = client.GetContainerReference(containerName);
-            c.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Off });
+            c.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Off});
             c.CreateIfNotExistsAsync();
 
             ICloudBlob blob = c.GetBlockBlobReference(Guid.NewGuid().ToString());
@@ -33,14 +36,15 @@ namespace CSC_Assignment_2.Services
             return blob.Uri.AbsoluteUri;
         }
 
-        public async Task<List<Uri>> GetAllImageFromContainerAsync(string containerName) {
+        public async Task<List<string>> GetAllImageFromContainerAsync(string containerName) {
 
             BlobContinuationToken continuationToken = null;
 
             CloudBlobContainer container = client.GetContainerReference(containerName);
 
             List<IListBlobItem> blobResults = new List<IListBlobItem>();
-            List<Uri> urlResults = new List<Uri>();
+            List<string> urlResults = new List<string>();
+            string sasKey = Startup.Configuration.GetConnectionString("BlobSASkey");
             do
             {
                 var response = await container.ListBlobsSegmentedAsync(continuationToken);
@@ -48,7 +52,7 @@ namespace CSC_Assignment_2.Services
                 blobResults = response.Results.ToList<IListBlobItem>();
 
                 foreach (IListBlobItem blob in blobResults) {
-                    urlResults.Add(blob.Uri);
+                    urlResults.Add(blob.Uri.AbsoluteUri + sasKey);
                 }
 
                 return urlResults;

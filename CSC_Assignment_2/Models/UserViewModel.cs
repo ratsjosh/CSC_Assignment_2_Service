@@ -11,13 +11,23 @@ namespace CSC_Assignment_2.Models
     {
         public string Id { get; set; }
         public string UserName { get; set; }
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
         [DataType(DataType.Password)]
         public string Password { get; set; }
-        [Display(Name = "Confirm Password")]
+
         [DataType(DataType.Password)]
+        [Display(Name = "Confirm password")]
+        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
+
         public string Name { get; set; }
+
+        [Required]
+        [EmailAddress]
         public string Email { get; set; }
+
         public List<SelectListItem> ApplicationRoles { get; set; }
         [Display(Name = "Role")]
         public string ApplicationRoleId { get; set; }
