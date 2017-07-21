@@ -23,7 +23,7 @@ namespace CSC_Assignment_2.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public List<UserListViewModel> GetAll()
         {
             List<UserListViewModel> model = new List<UserListViewModel>();
             model = userManager.Users.Select(u => new UserListViewModel
@@ -32,11 +32,11 @@ namespace CSC_Assignment_2.Controllers
                 Name = u.Name,
                 Email = u.Email
             }).ToList();
-            return View(model);
+            return model;
         }
 
         [HttpGet]
-        public IActionResult AddUser()
+        public UserViewModel AddUser()
         {
             UserViewModel model = new UserViewModel();
             model.ApplicationRoles = roleManager.Roles.Select(r => new SelectListItem
@@ -44,7 +44,7 @@ namespace CSC_Assignment_2.Controllers
                 Text = r.Name,
                 Value = r.Id
             }).ToList();
-            return PartialView("_AddUser", model);
+            return model;
         }
 
         [HttpPost]
@@ -67,16 +67,16 @@ namespace CSC_Assignment_2.Controllers
                         IdentityResult roleResult = await userManager.AddToRoleAsync(user, applicationRole.Name);
                         if (roleResult.Succeeded)
                         {
-                            return RedirectToAction("Index");
+                            return Ok(new { Success = false, message = "Successfully Add user" });
                         }
                     }
                 }
             }
-            return View(model);
+            return BadRequest(new { Success = false, message = "Failed to Add user" });
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditUser(string id)
+        public async Task<EditUserViewModel> EditUser(string id)
         {
             EditUserViewModel model = new EditUserViewModel();
             model.ApplicationRoles = roleManager.Roles.Select(r => new SelectListItem
@@ -95,7 +95,7 @@ namespace CSC_Assignment_2.Controllers
                     model.ApplicationRoleId = roleManager.Roles.Single(r => r.Name == userManager.GetRolesAsync(user).Result.Single()).Id;
                 }
             }
-            return PartialView("_EditUser", model);
+            return model;
         }
 
         [HttpPost]
@@ -124,7 +124,7 @@ namespace CSC_Assignment_2.Controllers
                                     IdentityResult newRoleResult = await userManager.AddToRoleAsync(user, applicationRole.Name);
                                     if (newRoleResult.Succeeded)
                                     {
-                                        return RedirectToAction("Index");
+                                        return Ok(new { Success = false, message = "Successfully Edit user" });
                                     }
                                 }
                             }
@@ -132,11 +132,11 @@ namespace CSC_Assignment_2.Controllers
                     }
                 }
             }
-            return PartialView("_EditUser", model);
+            return BadRequest(new { Success = false, message = "Failed to Edit user" });
         }
 
         [HttpGet]
-        public async Task<IActionResult> DeleteUser(string id)
+        public async Task<string> DeleteUser(string id)
         {
             string name = string.Empty;
             if (!String.IsNullOrEmpty(id))
@@ -147,7 +147,7 @@ namespace CSC_Assignment_2.Controllers
                     name = applicationUser.Name;
                 }
             }
-            return PartialView("_DeleteUser", name);
+            return name;
         }
 
         [HttpPost]
@@ -161,11 +161,11 @@ namespace CSC_Assignment_2.Controllers
                     IdentityResult result = await userManager.DeleteAsync(applicationUser);
                     if (result.Succeeded)
                     {
-                        return RedirectToAction("Index");
+                        return Ok(new { Success = false, message = "Successfully Delete user" });
                     }
                 }
             }
-            return View();
+            return BadRequest(new { Success = false, message = "Failed to Delete user" });
         }
     }
 }
