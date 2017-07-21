@@ -84,7 +84,7 @@ namespace CSC_Assignment_2.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddEditApplicationRole(string id, ApplicationRoleViewModel model)
+        public async Task<IActionResult> AddEditApplicationRole(string id, [FromBody]ApplicationRoleViewModel model)
         {
             if (ModelState.IsValid)
             {

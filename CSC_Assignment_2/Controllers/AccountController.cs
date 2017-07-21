@@ -96,16 +96,6 @@ namespace CSC_Assignment_2.Controllers
         }
 
         //
-        // GET: /Account/Register
-        [HttpGet]
-        [AllowAnonymous]
-        public IActionResult Register(string returnUrl = null)
-        {
-            ViewData["ReturnUrl"] = returnUrl;
-            return View();
-        }
-
-        //
         // POST: /Account/Register
         [HttpPost]
         [AllowAnonymous]
@@ -130,7 +120,8 @@ namespace CSC_Assignment_2.Controllers
                     //var callbackUrl = Url.Action(nameof(ConfirmEmail), "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
                     //await _emailSender.SendEmailAsync(model.Email, "Confirm your account",
                     //    $"Please confirm your account by clicking this link: <a href='{callbackUrl}'>link</a>");
-                    ApplicationRole applicationRole = await _roleManager.FindByIdAsync(model.ApplicationRoleId);
+                    ApplicationRole mRole = await _roleManager.FindByIdAsync(model.ApplicationRoleId);
+                    ApplicationRole applicationRole = mRole.Name.Equals("Admin") ? mRole : await _roleManager.FindByIdAsync(_roleManager.Roles.Single(r => r.Name.Equals("User")).Id);
                     if (applicationRole != null)
                     {
                         IdentityResult roleResult = await _userManager.AddToRoleAsync(user, applicationRole.Name);
