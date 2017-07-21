@@ -8,9 +8,10 @@ using CSC_Assignment_2.Data;
 namespace CSC_Assignment_2.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20170721182421_AddAttributeProfilePictureImage_2")]
+    partial class AddAttributeProfilePictureImage_2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "1.1.2")

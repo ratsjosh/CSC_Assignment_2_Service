@@ -19,6 +19,7 @@ namespace CSC_Assignment_2.Controllers
     public class AccountController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IEmailSender _emailSender;
         private readonly ISmsSender _smsSender;
@@ -28,12 +29,14 @@ namespace CSC_Assignment_2.Controllers
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
+            RoleManager<ApplicationRole> roleManager,
             IOptions<IdentityCookieOptions> identityCookieOptions,
             IEmailSender emailSender,
             ISmsSender smsSender,
             ILoggerFactory loggerFactory)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _signInManager = signInManager;
             _externalCookieScheme = identityCookieOptions.Value.ExternalCookieAuthenticationScheme;
             _emailSender = emailSender;
@@ -106,17 +109,15 @@ namespace CSC_Assignment_2.Controllers
         // POST: /Account/Register
         [HttpPost]
         [AllowAnonymous]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(UserViewModel model, string returnUrl = null)
+        public async Task<IActionResult> Register([FromBody]UserViewModel model, string returnUrl = null)
         {
-            ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
             {
                 var user = new ApplicationUser { UserName = model.Email,
                     Email = model.Email,
                     Name = model.Name,
-                    Bio = model.Bio,
-                    Reknown = model.Reknown
+                    Reknown = model.Reknown,
+                    Bio = model.Bio
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);
@@ -129,19 +130,27 @@ namespace CSC_Assignment_2.Controllers
                     //var callbackUrl = Url.Action(nameof(ConfirmEmail), "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
                     //await _emailSender.SendEmailAsync(model.Email, "Confirm your account",
                     //    $"Please confirm your account by clicking this link: <a href='{callbackUrl}'>link</a>");
-                    BlobServices bs = new BlobServices();
-                    user.ProfilePictureImage = bs.UploadImageToBlobStorage(Convert.FromBase64String(model.ProfilePictureImage), user.Id);
-                    await _userManager.UpdateAsync(user);
+                    ApplicationRole applicationRole = await _roleManager.FindByIdAsync(model.ApplicationRoleId);
+                    if (applicationRole != null)
+                    {
+                        IdentityResult roleResult = await _userManager.AddToRoleAsync(user, applicationRole.Name);
+                        if (roleResult.Succeeded)
+                        {
+                            BlobServices bs = new BlobServices();
+                            user.ProfilePictureImage = bs.UploadImageToBlobStorage(Convert.FromBase64String(model.ProfilePictureImage), user.Id);
+                            await _userManager.UpdateAsync(user);
 
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    _logger.LogInformation(3, "User created a new account with password.");
-                    return RedirectToLocal(returnUrl);
+                            _logger.LogInformation(3, "User created a new account with password.");
+                            return RedirectToLocal(returnUrl);
+                        }
+                    }
+                    
                 }
                 AddErrors(result);
             }
 
             // If we got this far, something failed, redisplay form
-            return View(model);
+            return RedirectToLocal(HttpContext.Request.Path);
         }
 
         //
