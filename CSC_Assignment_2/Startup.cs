@@ -12,11 +12,17 @@ using Microsoft.Extensions.Logging;
 using CSC_Assignment_2.Data;
 using CSC_Assignment_2.Models;
 using CSC_Assignment_2.Services;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using CSC_Assignment_2.Middlewares;
+using Microsoft.Extensions.Options;
 
 namespace CSC_Assignment_2
 {
     public class Startup
     {
+        public readonly static string secretKey = "mysupersecret_secretkey!123";
+
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -79,6 +85,17 @@ namespace CSC_Assignment_2
             app.UseIdentity();
 
             // Add external authentication middleware below. To configure them please see https://go.microsoft.com/fwlink/?LinkID=532715
+
+            // Add JWT generation endpoint:
+            var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey));
+            var options = new TokenProviderOptions
+            {
+                Audience = "ExampleAudience",
+                Issuer = "ExampleIssuer",
+                SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256),
+            };
+
+            app.UseMiddleware<TokenProviderMiddleware>(Options.Create(options));
 
             app.UseMvc(routes =>
             {

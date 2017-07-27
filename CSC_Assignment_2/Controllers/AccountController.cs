@@ -12,6 +12,8 @@ using Microsoft.Extensions.Options;
 using CSC_Assignment_2.Models;
 using CSC_Assignment_2.Models.AccountViewModels;
 using CSC_Assignment_2.Services;
+using Microsoft.AspNetCore.Http;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace CSC_Assignment_2.Controllers
 {
@@ -43,8 +45,7 @@ namespace CSC_Assignment_2.Controllers
             _smsSender = smsSender;
             _logger = loggerFactory.CreateLogger<AccountController>();
         }
-
-        //
+        
         // GET: /Account/Login
         [HttpGet]
         [AllowAnonymous]
