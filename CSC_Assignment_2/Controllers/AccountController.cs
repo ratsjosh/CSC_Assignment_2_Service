@@ -95,15 +95,20 @@ namespace CSC_Assignment_2.Controllers
             return View(model);
         }
 
-        //
+
+
         // POST: /Account/Register
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> Register([FromBody]UserViewModel model, string returnUrl = null)
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(UserViewModel model, string returnUrl = null)
         {
+            var errors = ModelState.Values.SelectMany(v => v.Errors);
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser { UserName = model.Email,
+                var user = new ApplicationUser
+                {
+                    UserName = model.Email,
                     Email = model.Email,
                     Name = model.Name,
                     Reknown = model.Reknown,
@@ -111,7 +116,7 @@ namespace CSC_Assignment_2.Controllers
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);
-                
+
                 if (result.Succeeded)
                 {
                     // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=532713
@@ -120,28 +125,32 @@ namespace CSC_Assignment_2.Controllers
                     //var callbackUrl = Url.Action(nameof(ConfirmEmail), "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
                     //await _emailSender.SendEmailAsync(model.Email, "Confirm your account",
                     //    $"Please confirm your account by clicking this link: <a href='{callbackUrl}'>link</a>");
-                    ApplicationRole mRole = await _roleManager.FindByIdAsync(model.ApplicationRoleId);
-                    ApplicationRole applicationRole = mRole.Name.Equals("Admin") ? mRole : await _roleManager.FindByIdAsync(_roleManager.Roles.Single(r => r.Name.Equals("User")).Id);
+                    ApplicationRole mRole = null;
+                    if (model.ApplicationRoleId != null)
+                        mRole = await _roleManager.FindByIdAsync(model.ApplicationRoleId);
+                    ApplicationRole applicationRole = mRole != null && mRole.Name.Equals("Admin") ? mRole : await _roleManager.FindByIdAsync(_roleManager.Roles.Single(r => r.Name.Equals("User")).Id);
                     if (applicationRole != null)
                     {
                         IdentityResult roleResult = await _userManager.AddToRoleAsync(user, applicationRole.Name);
                         if (roleResult.Succeeded)
                         {
                             BlobServices bs = new BlobServices();
-                            user.ProfilePictureImage = await bs.UploadImageToBlobStorageAsync(Convert.FromBase64String(model.ProfilePictureImage), user.Id);
+                            if (user.ProfilePictureImage != null)
+                                user.ProfilePictureImage = await bs.UploadImageToBlobStorageAsync(Convert.FromBase64String(model.ProfilePictureImage), user.Id);
                             await _userManager.UpdateAsync(user);
 
-                            _logger.LogInformation(3, "User created a new account with password.");
-                            return RedirectToLocal(returnUrl);
+                            string message = "User created a new account with password.";
+                            _logger.LogInformation(3, message);
+                            return Ok(Json(new { message = message, user = user }));
                         }
                     }
-                    
+
                 }
                 AddErrors(result);
             }
 
             // If we got this far, something failed, redisplay form
-            return RedirectToLocal(HttpContext.Request.Path);
+            return BadRequest(Json(new { messages = errors }));
         }
 
         //
