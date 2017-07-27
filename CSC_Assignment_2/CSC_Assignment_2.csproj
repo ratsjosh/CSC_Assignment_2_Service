@@ -44,7 +44,7 @@
     <WCFMetadata Include="Connected Services" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="App_Start\" />
+    <Folder Include="Middlewares\" />
   </ItemGroup>
 
 </Project>

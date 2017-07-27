@@ -10,11 +10,11 @@ namespace CSC_Assignment_2.Models
     {
         public string Path { get; set; } = "/token";
 
-        public string Issuer { get; set; }
+        public string Issuer { get; set; } = "Issuer";
 
-        public string Audience { get; set; }
+        public string Audience { get; set; } = "Audience";
 
-        public TimeSpan Expiration { get; set; } = TimeSpan.FromMinutes(10);
+        public TimeSpan Expiration { get; set; } = TimeSpan.FromMinutes(500);
 
         public SigningCredentials SigningCredentials { get; set; }
     }

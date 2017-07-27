@@ -14,8 +14,8 @@ using CSC_Assignment_2.Models;
 using CSC_Assignment_2.Services;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using CSC_Assignment_2.Middlewares;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace CSC_Assignment_2
 {
@@ -55,6 +55,7 @@ namespace CSC_Assignment_2
             // Add application services.
             services.AddTransient<IEmailSender, AuthMessageSender>();
             services.AddTransient<ISmsSender, AuthMessageSender>();
+            services.AddSingleton<IConfiguration>(Configuration);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -84,13 +85,41 @@ namespace CSC_Assignment_2
 
             // Add external authentication middleware below. To configure them please see https://go.microsoft.com/fwlink/?LinkID=532715
 
-            // Add JWT generation endpoint:
             string secretKey = Configuration.GetSection("TokenConfiguration")["SecretKey"].ToString();
-            var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey));
+            SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            SigningCredentials signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
+            //---
+            const string audience = "Audience";
+            const string issuer = "Issuer";
+            //---
+            TokenValidationParameters tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = signingKey,
+
+                ValidateIssuer = false,
+                ValidIssuer = issuer,
+
+                ValidateAudience = true,
+                ValidAudience = audience,
+
+                ValidateLifetime = true,
+
+                ClockSkew = TimeSpan.Zero,
+                AuthenticationType = JwtBearerDefaults.AuthenticationScheme
+            };
+            app.UseJwtBearerAuthentication(new JwtBearerOptions
+            {
+                AutomaticAuthenticate = true,
+                AutomaticChallenge = true,
+                TokenValidationParameters = tokenValidationParameters,
+                AuthenticationScheme = JwtBearerDefaults.AuthenticationScheme,
+            });
+
+
             var options = new TokenProviderOptions
             {
-                Audience = "ExampleAudience",
-                Issuer = "ExampleIssuer",
+
                 SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256),
             };
 

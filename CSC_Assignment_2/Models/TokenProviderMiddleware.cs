@@ -1,6 +1,4 @@
-﻿using CSC_Assignment_2.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
@@ -10,22 +8,19 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace CSC_Assignment_2.Middlewares
+namespace CSC_Assignment_2.Models
 {
     public class TokenProviderMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly TokenProviderOptions _options;
-        private readonly UserManager<ApplicationUser> _UserManager;
 
         public TokenProviderMiddleware(
         RequestDelegate next,
-        IOptions<TokenProviderOptions> options,
-        UserManager<ApplicationUser> userManager)
+        IOptions<TokenProviderOptions> options)
         {
             _next = next;
             _options = options.Value;
-            _UserManager = userManager;
         }
 
         public Task Invoke(HttpContext context)
@@ -52,16 +47,16 @@ namespace CSC_Assignment_2.Middlewares
             var username = context.Request.Form["username"];
             var password = context.Request.Form["password"];
 
-            var identity = await GetIdentityAsync(username, password);
+            var identity = await GetIdentity(username, password);
             if (identity == null)
             {
                 context.Response.StatusCode = 400;
                 await context.Response.WriteAsync("Invalid username or password.");
                 return;
             }
-            long ToUnixEpochDate(DateTime date) => new DateTimeOffset(date).ToUniversalTime().ToUnixTimeSeconds();
-            var now = DateTime.UtcNow;
 
+            var now = DateTime.UtcNow;
+            long ToUnixEpochDate(DateTime date) => new DateTimeOffset(date).ToUniversalTime().ToUnixTimeSeconds();
             // Specifically add the jti (random nonce), iat (issued timestamp), and sub (subject/user) claims.
             // You can add other claims here, if you want:
             var claims = new Claim[]
@@ -73,13 +68,13 @@ namespace CSC_Assignment_2.Middlewares
 
             // Create the JWT and write it to a string
             var jwt = new JwtSecurityToken(
-                issuer: _options.Issuer,
-                audience: _options.Audience,
-                claims: claims,
-                notBefore: now,
-                expires: now.Add(_options.Expiration),
-                signingCredentials: _options.SigningCredentials);
 
+            issuer: _options.Issuer,
+            audience: _options.Audience,
+            claims: claims,
+            notBefore: now,
+            expires: now.Add(_options.Expiration),
+            signingCredentials: _options.SigningCredentials);
             var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
 
             var response = new
@@ -92,18 +87,16 @@ namespace CSC_Assignment_2.Middlewares
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(JsonConvert.SerializeObject(response, new JsonSerializerSettings { Formatting = Formatting.Indented }));
         }
-
-        private async Task<ClaimsIdentity> GetIdentityAsync(string username, string password)
+        private Task<ClaimsIdentity> GetIdentity(string username, string password)
         {
-            var user = await _UserManager.FindByEmailAsync(username);
-            if (user != null)
+            // DON'T do this in production, obviously!
+            if (username == "TEST" && password == "TEST123")
             {
-                if (await _UserManager.CheckPasswordAsync(user, password))
-                    return await Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(username, "Token"), new Claim[] { }));
+                return Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(username, "Token"), new Claim[] { }));
             }
 
             // Credentials are invalid, or account doesn't exist
-            return await Task.FromResult<ClaimsIdentity>(null);
+            return Task.FromResult<ClaimsIdentity>(null);
         }
     }
 }

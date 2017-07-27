@@ -39,6 +39,13 @@ namespace CSC_Assignment_2.Controllers
             _logger = loggerFactory.CreateLogger<ManageController>();
         }
 
+        [HttpPost]
+        public async Task<string> GetCurrentUserIdAsync()
+        {
+            var username = HttpContext.Request.Form["username"];
+            var user = await _userManager.FindByEmailAsync(username);
+            return user.Id;
+        }
         //
         // GET: /Manage/Index
         [HttpGet]
