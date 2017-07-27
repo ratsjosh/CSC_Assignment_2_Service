@@ -21,8 +21,6 @@ namespace CSC_Assignment_2
 {
     public class Startup
     {
-        public readonly static string secretKey = "mysupersecret_secretkey!123";
-
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -87,7 +85,8 @@ namespace CSC_Assignment_2
             // Add external authentication middleware below. To configure them please see https://go.microsoft.com/fwlink/?LinkID=532715
 
             // Add JWT generation endpoint:
-            var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey));
+            string secretKey = Configuration.GetSection("TokenConfiguration")["SecretKey"].ToString();
+            var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey));
             var options = new TokenProviderOptions
             {
                 Audience = "ExampleAudience",
