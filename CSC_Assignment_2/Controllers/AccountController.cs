@@ -19,6 +19,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
+using Microsoft.AspNetCore.Cors;
 
 namespace CSC_Assignment_2.Controllers
 {
@@ -90,10 +91,10 @@ namespace CSC_Assignment_2.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public Task<bool> AuthenticateJwtToken([FromBody]string token)
+        public IActionResult AuthenticateJwtToken(TokenModel t)
         {
             string username = "";
-            if (ValidateToken(token, out username))
+            if (ValidateToken(t.AccessToken, out username))
             {
                 // based on username to get more information from database in order to build local identity
                 var claims = new List<Claim>
@@ -105,10 +106,10 @@ namespace CSC_Assignment_2.Controllers
                 var identity = new ClaimsIdentity(claims, "Jwt");
                 IPrincipal user = new ClaimsPrincipal(identity);
 
-                return Task.FromResult(user.Identity.IsAuthenticated);
+                return Ok(Json(new { isAuthenticated = user.Identity.IsAuthenticated }));
             }
 
-            return Task.FromResult(false);
+            return BadRequest(Json(new { isAuthenticated = false }));
         }
 
         private ClaimsPrincipal GetPrincipal(string token)
@@ -182,6 +183,27 @@ namespace CSC_Assignment_2.Controllers
 
             ViewData["ReturnUrl"] = returnUrl;
             return View();
+        }
+
+        // GET: /Account
+        [HttpGet]
+        public IEnumerable<ApplicationUser> GetAll()
+        {
+            return _userManager.Users;
+        }
+
+        // GET: /Account/Login
+        [HttpGet]
+        public async Task<string> GetUserByEmailAsync(string email)
+        {
+            return await _userManager.GetUserIdAsync(await _userManager.FindByEmailAsync(email));
+        }
+
+        // GET: /Account/Login
+        [HttpGet]
+        public async Task<ApplicationUser> GetUserByIdAsync(string id)
+        {
+            return await _userManager.FindByIdAsync(id);
         }
 
         //

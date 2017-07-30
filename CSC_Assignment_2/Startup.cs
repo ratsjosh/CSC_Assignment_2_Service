@@ -51,6 +51,15 @@ namespace CSC_Assignment_2
             services.AddIdentity<ApplicationUser, ApplicationRole>()
              .AddEntityFrameworkStores<ApplicationDbContext>()
              .AddDefaultTokenProviders();
+            //services.AddCors(options =>
+            //{
+            //    options.AddPolicy("CorsPolicy",
+            //        builder => builder.AllowAnyOrigin()
+            //        .AllowAnyMethod()
+            //        .AllowAnyHeader()
+            //        .AllowCredentials());
+            //});
+            services.AddCors();
             services.AddMvc();
 
             // Add application services.
@@ -58,7 +67,7 @@ namespace CSC_Assignment_2
             services.AddTransient<ISmsSender, AuthMessageSender>();
             services.AddSingleton<IConfiguration>(Configuration);
         }
-       
+
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
@@ -68,6 +77,7 @@ namespace CSC_Assignment_2
 
             #region CORS
             app.UseCors(builder => builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().AllowCredentials());
+            //app.UseCors("CorsPolicy");
             #endregion
 
             if (env.IsDevelopment())
