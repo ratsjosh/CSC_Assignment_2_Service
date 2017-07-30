@@ -7,11 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using CSC_Assignment_2.Services;
 using CSC_Assignment_2.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace CSC_Assignment_2.Controllers
 {
     //[Authorize]
     //[Produces("application/json")]
+    [Authorize(ActiveAuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ImageController : Controller
     {
         // POST: /api/Image/UploadProfilePic
@@ -25,7 +27,6 @@ namespace CSC_Assignment_2.Controllers
 
         // POST: /api/Image/UploadMultiplePic
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<List<string>> UploadMultiplePicAsync(ImageModel imageModel)
         {
             BlobServices blobService = new BlobServices();

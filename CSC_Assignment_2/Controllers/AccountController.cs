@@ -18,6 +18,7 @@ using System.Security.Principal;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
 
 namespace CSC_Assignment_2.Controllers
 {
@@ -56,7 +57,7 @@ namespace CSC_Assignment_2.Controllers
         [HttpGet]
         public string Value()
         {
-            return "";
+            return "hello";
         }
 
         //[HttpPost]
@@ -87,86 +88,89 @@ namespace CSC_Assignment_2.Controllers
         //    return token;
         //}
 
-        //[HttpPost]
-        //[AllowAnonymous]
-        //public Task<IPrincipal> AuthenticateJwtToken([FromBody]string token)
-        //{
-        //    string username = "";
-        //    if (ValidateToken(token, out username))
-        //    {
-        //        // based on username to get more information from database in order to build local identity
-        //        var claims = new List<Claim>
-        //    {
-        //        new Claim(ClaimTypes.Name, username)
-        //        // Add more claims if needed: Roles, ...
-        //    };
+        [HttpPost]
+        [AllowAnonymous]
+        public Task<bool> AuthenticateJwtToken([FromBody]string token)
+        {
+            string username = "";
+            if (ValidateToken(token, out username))
+            {
+                // based on username to get more information from database in order to build local identity
+                var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, username)
+                // Add more claims if needed: Roles, ...
+            };
 
-        //        var identity = new ClaimsIdentity(claims, "Jwt");
-        //        IPrincipal user = new ClaimsPrincipal(identity);
+                var identity = new ClaimsIdentity(claims, "Jwt");
+                IPrincipal user = new ClaimsPrincipal(identity);
 
-        //        return Task.FromResult(user);
-        //    }
+                return Task.FromResult(user.Identity.IsAuthenticated);
+            }
 
-        //    return Task.FromResult<IPrincipal>(null);
-        //}
+            return Task.FromResult(false);
+        }
 
-        //private ClaimsPrincipal GetPrincipal(string token)
-        //{
-        //    try
-        //    {
-        //        var tokenHandler = new JwtSecurityTokenHandler();
-        //        var jwtToken = tokenHandler.ReadToken(token) as JwtSecurityToken;
+        private ClaimsPrincipal GetPrincipal(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var jwtToken = tokenHandler.ReadToken(token) as JwtSecurityToken;
 
-        //        if (jwtToken == null)
-        //            return null;
+                if (jwtToken == null)
+                    return null;
 
-        //        string secretKey = _configuration.GetSection("TokenConfiguration")["SecretKey"].ToString();
-        //        var symmetricKey = Convert.FromBase64String(secretKey);
+                string secretKey = _configuration.GetSection("TokenConfiguration")["SecretKey"].ToString();
+                SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
 
-        //        var validationParameters = new TokenValidationParameters()
-        //        {
-        //            RequireExpirationTime = true,
-        //            ValidateIssuer = false,
-        //            ValidateAudience = false,
-        //            IssuerSigningKey = new SymmetricSecurityKey(symmetricKey)
-        //        };
+                var validationParameters = new TokenValidationParameters()
+                {
+                    RequireExpirationTime = true,
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    IssuerSigningKey = signingKey
+                };
 
-        //        SecurityToken securityToken;
-        //        var principal = tokenHandler.ValidateToken(token, validationParameters, out securityToken);
+                SecurityToken securityToken;
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out securityToken);
 
-        //        return principal;
-        //    }
+                return principal;
+            }
 
-        //    catch (Exception)
-        //    {
-        //        //should write log
-        //        return null;
-        //    }
-        //}
+            catch (Exception ex)
+            {
+                //should write log
+                string exception = ex.Message;
+                return null;
+            }
+        }
 
-        //private bool ValidateToken(string token, out string username)
-        //{
-        //    username = null;
+        private bool ValidateToken(string token, out string username)
+        {
+            username = null;
 
-        //    var simplePrinciple = GetPrincipal(token);
-        //    var identity = simplePrinciple.Identity as ClaimsIdentity;
+            var simplePrinciple = GetPrincipal(token);
+            if (simplePrinciple == null)
+                return false;
+            var identity = simplePrinciple.Identity as ClaimsIdentity;
 
-        //    if (identity == null)
-        //        return false;
+            if (identity == null)
+                return false;
 
-        //    if (!identity.IsAuthenticated)
-        //        return false;
+            if (!identity.IsAuthenticated)
+                return false;
 
-        //    var usernameClaim = identity.FindFirst(ClaimTypes.Name);
-        //    username = usernameClaim?.Value;
+            var usernameClaim = identity.FindFirst(ClaimTypes.Name);
+            username = usernameClaim?.Value;
 
-        //    if (string.IsNullOrEmpty(username))
-        //        return false;
+            if (string.IsNullOrEmpty(username))
+                return false;
 
-        //    // More validate to check whether username exists in system
+            // More validate to check whether username exists in system
 
-        //    return true;
-        //}
+            return true;
+        }
 
         // GET: /Account/Login
         [HttpGet]
