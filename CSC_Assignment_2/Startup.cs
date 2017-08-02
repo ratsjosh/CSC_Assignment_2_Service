@@ -47,6 +47,7 @@ namespace CSC_Assignment_2
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
+
             services.AddIdentity<ApplicationUser, ApplicationRole>()
              .AddEntityFrameworkStores<ApplicationDbContext>()
              .AddDefaultTokenProviders();
@@ -56,6 +57,9 @@ namespace CSC_Assignment_2
             services.AddTransient<IEmailSender, AuthMessageSender>();
             services.AddTransient<ISmsSender, AuthMessageSender>();
             services.AddSingleton<IConfiguration>(Configuration);
+
+
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -82,6 +86,12 @@ namespace CSC_Assignment_2
             app.UseStaticFiles();
 
             app.UseIdentity();
+
+            // Temp not working
+            app.UseGoogleAuthentication(new GoogleOptions() {
+                ClientId = Configuration.GetSection("Authentication")["Google:ClientId"].ToString(),
+                ClientSecret = Configuration.GetSection("Authentication")["Google:ClientSecret"].ToString()
+            });
 
             // Add external authentication middleware below. To configure them please see https://go.microsoft.com/fwlink/?LinkID=532715
 
