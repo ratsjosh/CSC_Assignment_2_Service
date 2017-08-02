@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
@@ -14,13 +15,16 @@ namespace CSC_Assignment_2.Models
     {
         private readonly RequestDelegate _next;
         private readonly TokenProviderOptions _options;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public TokenProviderMiddleware(
         RequestDelegate next,
-        IOptions<TokenProviderOptions> options)
+        IOptions<TokenProviderOptions> options,
+        UserManager<ApplicationUser> userManager)
         {
             _next = next;
             _options = options.Value;
+            _userManager = userManager;
         }
 
         public Task Invoke(HttpContext context)
@@ -47,7 +51,7 @@ namespace CSC_Assignment_2.Models
             var username = context.Request.Form["username"];
             var password = context.Request.Form["password"];
 
-            var identity = await GetIdentity(username, password);
+            var identity = await GetIdentityAsync(username, password);
             if (identity == null)
             {
                 context.Response.StatusCode = 400;
@@ -61,6 +65,7 @@ namespace CSC_Assignment_2.Models
             // You can add other claims here, if you want:
             var claims = new Claim[]
         {
+            new Claim(ClaimTypes.Name, username),
             new Claim(JwtRegisteredClaimNames.Sub, username),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(JwtRegisteredClaimNames.Iat, ToUnixEpochDate(now).ToString(), ClaimValueTypes.Integer64)
@@ -87,16 +92,17 @@ namespace CSC_Assignment_2.Models
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(JsonConvert.SerializeObject(response, new JsonSerializerSettings { Formatting = Formatting.Indented }));
         }
-        private Task<ClaimsIdentity> GetIdentity(string username, string password)
+        private async Task<ClaimsIdentity> GetIdentityAsync(string username, string password)
         {
-            // DON'T do this in production, obviously!
-            if (username == "TEST" && password == "TEST123")
+            var user = await _userManager.FindByEmailAsync(username);
+            if (user != null)
             {
-                return Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(username, "Token"), new Claim[] { }));
+                if (await _userManager.CheckPasswordAsync(user, password))
+                    return await Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(username, "Token"), new Claim[] { }));
             }
 
             // Credentials are invalid, or account doesn't exist
-            return Task.FromResult<ClaimsIdentity>(null);
+            return await Task.FromResult<ClaimsIdentity>(null);
         }
     }
 }

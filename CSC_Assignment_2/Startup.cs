@@ -21,6 +21,7 @@ namespace CSC_Assignment_2
 {
     public class Startup
     {
+
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -51,6 +52,15 @@ namespace CSC_Assignment_2
             services.AddIdentity<ApplicationUser, ApplicationRole>()
              .AddEntityFrameworkStores<ApplicationDbContext>()
              .AddDefaultTokenProviders();
+            //services.AddCors(options =>
+            //{
+            //    options.AddPolicy("CorsPolicy",
+            //        builder => builder.AllowAnyOrigin()
+            //        .AllowAnyMethod()
+            //        .AllowAnyHeader()
+            //        .AllowCredentials());
+            //});
+            services.AddCors();
             services.AddMvc();
 
             // Add application services.
@@ -62,6 +72,7 @@ namespace CSC_Assignment_2
 
         }
 
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
@@ -70,6 +81,7 @@ namespace CSC_Assignment_2
 
             #region CORS
             app.UseCors(builder => builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().AllowCredentials());
+            //app.UseCors("CorsPolicy");
             #endregion
 
             if (env.IsDevelopment())
@@ -94,6 +106,7 @@ namespace CSC_Assignment_2
             });
 
             // Add external authentication middleware below. To configure them please see https://go.microsoft.com/fwlink/?LinkID=532715
+
 
             string secretKey = Configuration.GetSection("TokenConfiguration")["SecretKey"].ToString();
             SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
@@ -130,10 +143,11 @@ namespace CSC_Assignment_2
             var options = new TokenProviderOptions
             {
 
-                SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256),
+                SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256Signature),
             };
 
             app.UseMiddleware<TokenProviderMiddleware>(Options.Create(options));
+
 
             app.UseMvc(routes =>
             {
