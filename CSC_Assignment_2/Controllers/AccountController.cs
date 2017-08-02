@@ -91,10 +91,10 @@ namespace CSC_Assignment_2.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public IActionResult AuthenticateJwtToken(TokenModel t)
+        public IActionResult AuthenticateJwtToken([FromBody]TokenModel token)
         {
             string username = "";
-            if (ValidateToken(t.AccessToken, out username))
+            if (ValidateToken(token.AccessToken, out username))
             {
                 // based on username to get more information from database in order to build local identity
                 var claims = new List<Claim>
