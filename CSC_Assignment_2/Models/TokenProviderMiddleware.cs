@@ -88,6 +88,10 @@ namespace CSC_Assignment_2.Models
                 expires_in = (int)_options.Expiration.TotalSeconds
             };
 
+            CookieOptions options = new CookieOptions();
+            options.Expires = DateTime.Now.AddDays(response.expires_in);
+            context.Response.Cookies.Append("Token", response.access_token, options);
+
             // Serialize and return the response
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(JsonConvert.SerializeObject(response, new JsonSerializerSettings { Formatting = Formatting.Indented }));

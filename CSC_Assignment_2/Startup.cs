@@ -107,7 +107,7 @@ namespace CSC_Assignment_2
 
             // Add external authentication middleware below. To configure them please see https://go.microsoft.com/fwlink/?LinkID=532715
 
-
+            // Source: https://stormpath.com/blog/token-authentication-asp-net-core
             string secretKey = Configuration.GetSection("TokenConfiguration")["SecretKey"].ToString();
             SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             SigningCredentials signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);

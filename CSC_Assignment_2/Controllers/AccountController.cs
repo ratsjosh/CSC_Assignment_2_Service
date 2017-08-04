@@ -194,7 +194,7 @@ namespace CSC_Assignment_2.Controllers
 
         // GET: /Account/Login
         [HttpGet]
-        public async Task<string> GetUserByEmailAsync(string email)
+        public async Task<string> GetUserIdByEmailAsync(string email)
         {
             return await _userManager.GetUserIdAsync(await _userManager.FindByEmailAsync(email));
         }
@@ -501,9 +501,7 @@ namespace CSC_Assignment_2.Controllers
         //
         // POST: /Account/ResetPassword
         [HttpPost]
-        [AllowAnonymous]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        public async Task<IActionResult> ResetPassword([FromBody]ResetPasswordViewModel model)
         {
             if (!ModelState.IsValid)
             {
