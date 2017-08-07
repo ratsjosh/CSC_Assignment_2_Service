@@ -36,6 +36,18 @@ namespace CSC_Assignment_2.Services
             return blob.Uri.AbsoluteUri;
         }
 
+        public async Task<string> DeleteImageFromBlobStorageAsync(Byte[] imageByte, string containerName)
+        {
+            CloudBlobContainer c = client.GetContainerReference(containerName);
+            await c.CreateIfNotExistsAsync();
+            await c.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
+
+            ICloudBlob blob = c.GetBlockBlobReference(Guid.NewGuid().ToString());
+            blob.StreamWriteSizeInBytes = 1048576;
+            await blob.UploadFromByteArrayAsync(imageByte, 0, imageByte.Length);
+            return blob.Uri.AbsoluteUri;
+        }
+
         public async Task<List<string>> GetAllImageFromContainerAsync(string containerName) {
 
             BlobContinuationToken continuationToken = null;

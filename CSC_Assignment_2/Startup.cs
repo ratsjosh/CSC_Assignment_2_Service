@@ -40,7 +40,7 @@ namespace CSC_Assignment_2
         }
 
         public static IConfigurationRoot Configuration { get; set; }
-
+        public static string clientURL = "";
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
@@ -104,7 +104,12 @@ namespace CSC_Assignment_2
                 ClientId = Configuration.GetSection("Authentication")["Google:ClientId"].ToString(),
                 ClientSecret = Configuration.GetSection("Authentication")["Google:ClientSecret"].ToString()
             });
-
+#if DEBUG
+            clientURL = Configuration.GetSection("ClientURL")["local"].ToString();
+#endif
+#if RELEASE
+            clientURL = Configuration.GetSection("ClientURL")["cloud"].ToString();
+#endif
             // Add external authentication middleware below. To configure them please see https://go.microsoft.com/fwlink/?LinkID=532715
 
             // Source: https://stormpath.com/blog/token-authentication-asp-net-core

@@ -283,7 +283,8 @@ namespace CSC_Assignment_2.Controllers
                     Email = model.Email,
                     Name = model.Name,
                     Reknown = model.Reknown,
-                    Bio = model.Bio
+                    Bio = model.Bio,
+                    EmailConfirmed = false
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);
@@ -292,10 +293,13 @@ namespace CSC_Assignment_2.Controllers
                 {
                     // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=532713
                     // Send an email with this link
-                    //var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    //var callbackUrl = Url.Action(nameof(ConfirmEmail), "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
-                    //await _emailSender.SendEmailAsync(model.Email, "Confirm your account",
-                    //    $"Please confirm your account by clicking this link: <a href='{callbackUrl}'>link</a>");
+                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var callbackUrl = Url.Action(nameof(ConfirmEmail), "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
+                    URLShortenerService urlShortener = new URLShortenerService();
+
+                    await new EmailServices().sendEmailAsync(model.Email, "Confirm your account",
+                        urlShortener.shortenIt(callbackUrl), EmailServices.EmailType.Register);
+
                     ApplicationRole mRole = null;
                     if (model.ApplicationRoleId != null)
                         mRole = await _roleManager.FindByIdAsync(model.ApplicationRoleId);
@@ -429,17 +433,27 @@ namespace CSC_Assignment_2.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> ConfirmEmail(string userId, string code)
         {
+            string errorURL = Startup.clientURL+"Error";
+            string successURL = Startup.clientURL + "Account";
+
             if (userId == null || code == null)
             {
-                return View("Error");
+                return Redirect(errorURL);
             }
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                return View("Error");
+                return Redirect(errorURL);
             }
             var result = await _userManager.ConfirmEmailAsync(user, code);
-            return View(result.Succeeded ? "ConfirmEmail" : "Error");
+
+            if (result.Succeeded)
+            {
+                return Redirect(successURL);
+            }
+            else {
+                return Redirect(errorURL);
+            }
         }
 
         //

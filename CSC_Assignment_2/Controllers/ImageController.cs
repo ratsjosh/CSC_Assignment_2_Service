@@ -25,19 +25,19 @@ namespace CSC_Assignment_2.Controllers
             return await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(imageModel.base64), imageModel.userId);
         }
 
-        // POST: /api/Image/UploadMultiplePic
-        [HttpPost]
-        public async Task<List<string>> UploadMultiplePicAsync(ImageModel imageModel)
-        {
-            BlobServices blobService = new BlobServices();
-            List<string> uploadedUri = new List<string>();
+        //// POST: /api/Image/UploadMultiplePic
+        //[HttpPost]
+        //public async Task<List<string>> UploadMultiplePicAsync(ImageModel imageModel)
+        //{
+        //    BlobServices blobService = new BlobServices();
+        //    List<string> uploadedUri = new List<string>();
 
-            foreach (var image in imageModel.ListOfBase64) {
-                uploadedUri.Add(await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(image), imageModel.userId));
-            }
-            return uploadedUri;
+        //    foreach (var image in imageModel.ListOfBase64) {
+        //        uploadedUri.Add(await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(image), imageModel.userId));
+        //    }
+        //    return uploadedUri;
 
-        }
+        //}
 
         // GET: /api/Image/GetAllImage
         [HttpGet]

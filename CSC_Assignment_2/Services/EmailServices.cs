@@ -39,7 +39,7 @@ namespace CSC_Assignment_2.Services
             switch (type) {
 
                 case EmailType.Register:
-                    return "<br><br>Click on the link below to verify your Talent Search account e-mail address:   " +
+                    return "<br><br>Thank you for registering with us!<br>Please click on the link below to verify your Talent Search account e-mail address:   " +
                      "<a href =\"" + msg + "\"><strong>Verify Account</strong></a>";
                     break;
 
