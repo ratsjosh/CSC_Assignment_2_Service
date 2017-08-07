@@ -69,7 +69,6 @@ namespace CSC_Assignment_2
             services.AddSingleton<IConfiguration>(Configuration);
 
 
-
         }
 
 
