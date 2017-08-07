@@ -1,9 +1,5 @@
 ﻿using Google.Apis.Services;
 using Google.Apis.Urlshortener.v1;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace CSC_Assignment_2.Services
 {
@@ -18,7 +14,7 @@ namespace CSC_Assignment_2.Services
             });
         }
 
-        public string shortenIt(string url)
+        public string ShortenIt(string url)
         {
             var m = new Google.Apis.Urlshortener.v1.Data.Url();
             m.LongUrl = url;

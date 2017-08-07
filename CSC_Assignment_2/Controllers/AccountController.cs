@@ -210,7 +210,6 @@ namespace CSC_Assignment_2.Controllers
         // POST: /Account/Login
         [HttpPost]
         [AllowAnonymous]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
@@ -298,7 +297,7 @@ namespace CSC_Assignment_2.Controllers
                     URLShortenerService urlShortener = new URLShortenerService();
 
                     await new EmailServices().sendEmailAsync(model.Email, "Confirm your account",
-                        urlShortener.shortenIt(callbackUrl), EmailServices.EmailType.Register);
+                        urlShortener.ShortenIt(callbackUrl), EmailServices.EmailType.Register);
 
                     ApplicationRole mRole = null;
                     if (model.ApplicationRoleId != null)
@@ -451,7 +450,7 @@ namespace CSC_Assignment_2.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> ConfirmEmail(string userId, string code)
         {
-            string errorURL = Startup.clientURL+"Error";
+            string errorURL = Startup.clientURL + "Error";
             string successURL = Startup.clientURL + "Account";
 
             if (userId == null || code == null)
@@ -469,7 +468,8 @@ namespace CSC_Assignment_2.Controllers
             {
                 return Redirect(successURL);
             }
-            else {
+            else
+            {
                 return Redirect(errorURL);
             }
         }
