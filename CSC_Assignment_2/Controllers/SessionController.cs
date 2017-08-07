@@ -12,6 +12,12 @@ using Amazon.DynamoDBv2.DocumentModel;
 using CSC_Assignment_2.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using System.Security.Principal;
 
 namespace CSC_Assignment_2.Controllers
 {
@@ -19,64 +25,192 @@ namespace CSC_Assignment_2.Controllers
     [Authorize(ActiveAuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class SessionController : Controller
     {
-        private BasicAWSCredentials _credentials;
-        private AmazonDynamoDBClient _client;
+        //private BasicAWSCredentials _credentials;
+        //private AmazonDynamoDBClient _client;
         private readonly IConfiguration _configuration;
-        private DynamoDBContext _context;
+        //private DynamoDBContext _context;
 
         public SessionController(
             IConfiguration configuration)
         {
             _configuration = configuration;
-            string accessKey = _configuration.GetConnectionString("DynamoDb:AccessKey");
-            string secretKey = _configuration.GetConnectionString("DynamoDb:SecretKey");
-            _credentials = new BasicAWSCredentials(accessKey, secretKey);
-            _client = new AmazonDynamoDBClient(_credentials, Amazon.RegionEndpoint.USWest2);
-            // Verify if table has been generated
-            Task.Run(() => VerifyTableAsync("Talents")).Wait();
+            //string accessKey = _configuration.GetConnectionString("DynamoDb:AccessKey");
+            //string secretKey = _configuration.GetConnectionString("DynamoDb:SecretKey");
+            //_credentials = new BasicAWSCredentials(accessKey, secretKey);
+            //_client = new AmazonDynamoDBClient(_credentials, Amazon.RegionEndpoint.USWest2);
+            //// Verify if table has been generated
+            //Task.Run(() => VerifyTableAsync("Talents")).Wait();
         }
 
-        public async Task VerifyTableAsync(string tableName)
+        //public async Task VerifyTableAsync(string tableName)
+        //{
+        //    var tableResponse = await _client.ListTablesAsync();
+        //    if (!tableResponse.TableNames.Contains(tableName))
+        //    {
+        //        await _client.CreateTableAsync(new CreateTableRequest
+        //        {
+        //            TableName = tableName,
+        //            ProvisionedThroughput = new ProvisionedThroughput
+        //            {
+        //                ReadCapacityUnits = 3,
+        //                WriteCapacityUnits = 1
+        //            },
+        //            KeySchema = new List<KeySchemaElement>
+        //            {
+        //                new KeySchemaElement
+        //                {
+        //                    AttributeName = "AccessToken",
+        //                    KeyType = KeyType.HASH
+        //                }
+        //            },
+        //            AttributeDefinitions = new List<AttributeDefinition>
+        //            {
+        //                new AttributeDefinition {
+        //                    AttributeName = "AccessToken",
+        //                    AttributeType =ScalarAttributeType.S
+        //                }
+        //            }
+        //        });
+        //        bool isTableAvailable = false;
+        //        while (!isTableAvailable)
+        //        {
+        //            Thread.Sleep(1000);
+        //            var tableStatus = await _client.DescribeTableAsync(tableName);
+        //            isTableAvailable = tableStatus.Table.TableStatus == "ACTIVE";
+        //        }
+        //    }
+        //    _context = new DynamoDBContext(_client);
+        //}
+
+        [HttpPost]
+        [AllowAnonymous]
+        public IActionResult AuthenticateJwtToken([FromBody]TokenModel token)
         {
-            var tableResponse = await _client.ListTablesAsync();
-            if (!tableResponse.TableNames.Contains(tableName))
+            string username = "";
+            if (ValidateToken(token.AccessToken, out username))
             {
-                await _client.CreateTableAsync(new CreateTableRequest
+                // based on username to get more information from database in order to build local identity
+                var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, username)
+                // Add more claims if needed: Roles, ...
+            };
+
+                var identity = new ClaimsIdentity(claims, "Jwt");
+                IPrincipal user = new ClaimsPrincipal(identity);
+
+                return Ok(Json(new { isAuthenticated = user.Identity.IsAuthenticated }));
+            }
+
+            return BadRequest(Json(new { isAuthenticated = false }));
+        }
+
+        private ClaimsPrincipal GetPrincipal(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var jwtToken = tokenHandler.ReadToken(token) as JwtSecurityToken;
+
+                if (jwtToken == null)
+                    return null;
+
+                string secretKey = _configuration.GetSection("TokenConfiguration")["SecretKey"].ToString();
+                SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+
+                var validationParameters = new TokenValidationParameters()
                 {
-                    TableName = tableName,
-                    ProvisionedThroughput = new ProvisionedThroughput
+                    RequireExpirationTime = true,
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    IssuerSigningKey = signingKey
+                };
+
+                SecurityToken securityToken;
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out securityToken);
+
+                return principal;
+            }
+
+            catch (Exception ex)
+            {
+                //should write log
+                string exception = ex.Message;
+                return null;
+            }
+        }
+
+        private bool ValidateToken(string token, out string username)
+        {
+            username = null;
+
+            var simplePrinciple = GetPrincipal(token);
+            if (simplePrinciple == null)
+                return false;
+            var identity = simplePrinciple.Identity as ClaimsIdentity;
+
+            if (identity == null)
+                return false;
+
+            if (!identity.IsAuthenticated)
+                return false;
+
+            var usernameClaim = identity.FindFirst(ClaimTypes.Name);
+            username = usernameClaim?.Value;
+
+            if (string.IsNullOrEmpty(username))
+                return false;
+
+            // More validate to check whether username exists in system
+
+            return true;
+        }
+
+        // GET: api/Session/GetUserByEmailAsync
+        /// <summary>
+        /// Get user by the access token
+        /// </summary>
+        /// <param name="accessToken"></param>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<LoginModel> GetUserByEmailAsync()
+        {
+            string email = Request.Headers["Email"];
+            if (!string.IsNullOrEmpty(email))
+            {
+                List<ScanCondition> conditions = new List<ScanCondition>();
+                conditions.Add(new ScanCondition("Email", ScanOperator.Equal, email));
+                List<LoginModel> result = await Startup._sessionDbcontext._context.ScanAsync<LoginModel>(conditions).GetRemainingAsync();
+                LoginModel authenticateLoginModel = null;
+                foreach (LoginModel lm in result)
+                {
+                    string username = "";
+                    if (ValidateToken(lm.AccessToken, out username))
                     {
-                        ReadCapacityUnits = 3,
-                        WriteCapacityUnits = 1
-                    },
-                    KeySchema = new List<KeySchemaElement>
-                    {
-                        new KeySchemaElement
+                        var claims = new List<Claim>
                         {
-                            AttributeName = "AccessToken",
-                            KeyType = KeyType.HASH
-                        }
-                    },
-                    AttributeDefinitions = new List<AttributeDefinition>
-                    {
-                        new AttributeDefinition {
-                            AttributeName = "AccessToken",
-                            AttributeType =ScalarAttributeType.S
+                            new Claim(ClaimTypes.Name, username)
+                            // Add more claims if needed: Roles, ...
+                        };
+
+                        var identity = new ClaimsIdentity(claims, "Jwt");
+                        IPrincipal user = new ClaimsPrincipal(identity);
+                        if (user.Identity.IsAuthenticated)
+                        {
+                            authenticateLoginModel = lm;
+                            break;
                         }
                     }
-                });
-                bool isTableAvailable = false;
-                while (!isTableAvailable)
-                {
-                    Thread.Sleep(1000);
-                    var tableStatus = await _client.DescribeTableAsync(tableName);
-                    isTableAvailable = tableStatus.Table.TableStatus == "ACTIVE";
                 }
+                return authenticateLoginModel;
             }
-            _context = new DynamoDBContext(_client);
+            else
+            {
+                return null;
+            }
         }
 
-        // GET: api/Session/GetAll
+        // GET: api/Session/GetUserByAccessTokenAsync
         /// <summary>
         /// Get user by the access token
         /// </summary>
@@ -90,7 +224,7 @@ namespace CSC_Assignment_2.Controllers
             {
                 List<ScanCondition> conditions = new List<ScanCondition>();
                 conditions.Add(new ScanCondition("AccessToken", ScanOperator.Equal, accessToken));
-                List<LoginModel> result = await _context.ScanAsync<LoginModel>(conditions).GetRemainingAsync();
+                List<LoginModel> result = await Startup._sessionDbcontext._context.ScanAsync<LoginModel>(conditions).GetRemainingAsync();
                 return result.FirstOrDefault();
             }
             else
@@ -105,7 +239,7 @@ namespace CSC_Assignment_2.Controllers
         {
             if (ModelState.IsValid)
             {
-                await _context.SaveAsync(model);
+                await Startup._sessionDbcontext._context.SaveAsync(model);
                 return Ok();
             }
             else
@@ -115,9 +249,18 @@ namespace CSC_Assignment_2.Controllers
         }
 
         // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpDelete]
+        public async Task<IActionResult> DeleteAsync([FromBody]LoginModel model)
         {
+            if (ModelState.IsValid)
+            {
+                await Startup._sessionDbcontext._context.DeleteAsync(model);
+                return Ok();
+            }
+            else
+            {
+                return BadRequest(ModelState);
+            }
         }
     }
 }
