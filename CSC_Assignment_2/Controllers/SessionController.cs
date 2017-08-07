@@ -173,6 +173,7 @@ namespace CSC_Assignment_2.Controllers
         /// <param name="accessToken"></param>
         /// <returns></returns>
         [HttpGet]
+        [AllowAnonymous]
         public async Task<LoginModel> GetUserByEmailAsync()
         {
             string email = Request.Headers["Email"];
