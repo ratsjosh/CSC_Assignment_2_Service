@@ -12,6 +12,7 @@
     <UserSecretsId>aspnet-CSC_Assignment_2-16af7b78-16b8-49f2-a601-0124f331ce46</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.3.4.17" />
     <PackageReference Include="Google.Apis.Urlshortener.v1" Version="1.28.0.138" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.0.0" />
     <PackageReference Include="Microsoft.AspNetCore" Version="1.1.2" />
