@@ -203,7 +203,7 @@ namespace CSC_Assignment_2.Controllers
         [HttpGet]
         public async Task<ApplicationUser> GetUserByIdAsync(string id)
         {
-            return await _userManager.FindByIdAsync(id);
+                return await _userManager.FindByIdAsync(id);
         }
 
         //
@@ -352,6 +352,24 @@ namespace CSC_Assignment_2.Controllers
             return Challenge(properties, provider);
         }
 
+        // POST: /Account/ExternalLogin
+        [HttpPost]
+        public async Task<string> UploadProfilePicAsync(ImageModel imageModel)
+        {
+            ApplicationUser user = await checkUserExistAsync(imageModel.Id);
+
+            if (user != null)
+            {
+                string sasKey = Startup.Configuration.GetConnectionString("BlobSASkey");
+                BlobServices blobService = new BlobServices();
+                user.ProfilePictureImage = await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(imageModel.ImageBase64), imageModel.Id);
+                await _userManager.UpdateAsync(user);
+                return user.ProfilePictureImage+ sasKey;
+            }
+            else {
+                return null;
+            }
+        }
         //
         // GET: /Account/ExternalLoginCallback
         [HttpGet]
@@ -652,6 +670,18 @@ namespace CSC_Assignment_2.Controllers
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+        public async Task<ApplicationUser> checkUserExistAsync(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
+            {
+                return user;
+            }
+            else {
+                return null;
+            }
         }
 
         #region Helpers

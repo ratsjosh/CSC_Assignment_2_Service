@@ -22,7 +22,7 @@ namespace CSC_Assignment_2.Controllers
         public async Task<string> UploadProfilePicAsync([FromBody]ImageModel imageModel)
         {
             BlobServices blobService = new BlobServices();
-            return await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(imageModel.base64), imageModel.userId);
+            return await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(imageModel.ImageBase64), imageModel.Id);
         }
 
         //// POST: /api/Image/UploadMultiplePic
