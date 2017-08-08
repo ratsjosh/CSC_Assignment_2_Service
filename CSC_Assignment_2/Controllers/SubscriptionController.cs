@@ -47,7 +47,7 @@ namespace CSC_Assignment_2.Controllers
         public string CreateSubscription()
         {
             StripeServices ss = new StripeServices();
-            ss.CreateSubscription();
+            ss.CreateSubscription(0, "");
             return null;
         }
 
