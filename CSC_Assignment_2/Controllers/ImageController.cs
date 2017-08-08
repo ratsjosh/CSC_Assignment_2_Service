@@ -35,7 +35,7 @@ namespace CSC_Assignment_2.Controllers
             string id = Request.Headers["UserId"];
             string url = "";
             string sasKey = Startup.Configuration.GetConnectionString("BlobSASkey");
-
+            string error = "";
             if (id != null)
             {
                 try
@@ -64,6 +64,7 @@ namespace CSC_Assignment_2.Controllers
                 }
                 catch (Exception ex)
                 {
+                    error = ex.ToString();
                     isSavedSuccessfully = false;
                 }
             }
@@ -74,7 +75,7 @@ namespace CSC_Assignment_2.Controllers
                 }
                 else
                 {
-                    return Json(new { Message = "Error in saving file" });
+                    return Json(new { Message = error });
                 }
             
             //BlobServices blobService = new BlobServices();
