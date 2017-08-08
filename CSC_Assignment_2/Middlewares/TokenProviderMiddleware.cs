@@ -88,9 +88,11 @@ namespace CSC_Assignment_2.Models
                 expires_in = (int)_options.Expiration.TotalSeconds
             };
 
-            CookieOptions options = new CookieOptions();
-            options.Expires = DateTime.Now.AddDays(response.expires_in);
-            context.Response.Cookies.Append("Token", response.access_token, options);
+            //CookieOptions options = new CookieOptions();
+            //options.Expires = DateTime.Now.AddDays(response.expires_in);
+            //context.Response.Cookies.Append("Token", response.access_token, options);
+
+            Startup._sessionDbcontext.PostAsync(new LoginModel { Email = username, AccessToken = encodedJwt, ExpirationDate = DateTime.Now.AddSeconds((int)_options.Expiration.TotalSeconds) });
 
             // Serialize and return the response
             context.Response.ContentType = "application/json";

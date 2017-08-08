@@ -22,6 +22,8 @@ namespace CSC_Assignment_2
     public class Startup
     {
 
+        public static SessionDbContext _sessionDbcontext = null;
+
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -68,7 +70,6 @@ namespace CSC_Assignment_2
             services.AddTransient<ISmsSender, AuthMessageSender>();
             services.AddSingleton<IConfiguration>(Configuration);
 
-
         }
 
 
@@ -99,7 +100,8 @@ namespace CSC_Assignment_2
             app.UseIdentity();
 
             // Temp not working
-            app.UseGoogleAuthentication(new GoogleOptions() {
+            app.UseGoogleAuthentication(new GoogleOptions()
+            {
                 ClientId = Configuration.GetSection("Authentication")["Google:ClientId"].ToString(),
                 ClientSecret = Configuration.GetSection("Authentication")["Google:ClientSecret"].ToString()
             });
@@ -109,6 +111,9 @@ namespace CSC_Assignment_2
 #if RELEASE
             clientURL = Configuration.GetSection("ClientURL")["cloud"].ToString();
 #endif
+
+            _sessionDbcontext = new SessionDbContext(Configuration);
+
             // Add external authentication middleware below. To configure them please see https://go.microsoft.com/fwlink/?LinkID=532715
 
             // Source: https://stormpath.com/blog/token-authentication-asp-net-core
