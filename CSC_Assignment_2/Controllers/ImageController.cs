@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using CSC_Assignment_2.Services;
 using CSC_Assignment_2.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.IO;
+using Microsoft.Extensions.Configuration;
 
 namespace CSC_Assignment_2.Controllers
 {
@@ -19,25 +21,73 @@ namespace CSC_Assignment_2.Controllers
         // POST: /api/Image/UploadProfilePic
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public async Task<string> UploadProfilePicAsync([FromBody]ImageModel imageModel)
+        public async Task<string> UploadPictureAsync([FromBody]ImageModel imageModel)
         {
             BlobServices blobService = new BlobServices();
             return await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(imageModel.ImageBase64), imageModel.Id);
         }
 
-        //// POST: /api/Image/UploadMultiplePic
-        //[HttpPost]
-        //public async Task<List<string>> UploadMultiplePicAsync(ImageModel imageModel)
-        //{
-        //    BlobServices blobService = new BlobServices();
-        //    List<string> uploadedUri = new List<string>();
+        // POST: /api/Image/UploadMultiplePic
+        [HttpPost]
+        public async Task<IActionResult> UploadMultiplePicAsync(IFormFile file)
+        {
+            bool isSavedSuccessfully = false;
+            string id = Request.Headers["UserId"];
+            string url = "";
+            string sasKey = Startup.Configuration.GetConnectionString("BlobSASkey");
 
-        //    foreach (var image in imageModel.ListOfBase64) {
-        //        uploadedUri.Add(await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(image), imageModel.userId));
-        //    }
-        //    return uploadedUri;
+            if (id != null)
+            {
+                try
+                {
+                    BlobServices blobService = new BlobServices();
 
-        //}
+                    //foreach (var file in files)
+                    //{
+
+                    //Save file content goes here
+                    if (file != null && file.Length > 0)
+                    {
+
+                        using (var fileStream = file.OpenReadStream())
+                        using (var ms = new MemoryStream())
+                        {
+                            fileStream.CopyTo(ms);
+                            var fileBytes = ms.ToArray();
+                            url = await blobService.UploadImageToBlobStorageAsync(fileBytes, id);
+                            isSavedSuccessfully = true;
+                        }
+                    }
+
+
+
+                }
+                catch (Exception ex)
+                {
+                    isSavedSuccessfully = false;
+                }
+            }
+
+            if (isSavedSuccessfully)
+                {
+                    return Json(new { ImageURL = url + sasKey });
+                }
+                else
+                {
+                    return Json(new { Message = "Error in saving file" });
+                }
+            
+            //BlobServices blobService = new BlobServices();
+            //List<string> uploadedUri = new List<string>();
+
+            //foreach (var image in imageModel.ListOfBase64)
+            //{
+            //    uploadedUri.Add(await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(image), imageModel.Id));
+            //}
+            //return uploadedUri;
+        }
+
+
 
         // GET: /api/Image/GetAllImage
         [HttpGet]
