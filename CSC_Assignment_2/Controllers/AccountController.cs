@@ -251,6 +251,13 @@ namespace CSC_Assignment_2.Controllers
                 return null;
             }
         }
+
+        [HttpPost]
+        public string AccountSubscribe(ImageModel imageModel)
+        {
+            return null;
+        }
+
         //
         // GET: /Account/ExternalLoginCallback
         [HttpGet]

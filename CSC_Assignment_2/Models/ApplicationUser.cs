@@ -16,6 +16,7 @@ namespace CSC_Assignment_2.Models
         public string Reknown { get; set; }
         public string Bio { get; set; }
         public string ProfilePictureImage { get; set; }
+        public string StripeToken { get; set; }
 
     }
 }
