@@ -85,9 +85,30 @@ namespace CSC_Assignment_2.Controllers
         [HttpGet]
         public async Task<ApplicationUser> GetUserByIdAsync(string id)
         {
-                return await _userManager.FindByIdAsync(id);
+            return await _userManager.FindByIdAsync(id);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> EditUser([FromBody]EditUserModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                ApplicationUser user = await _userManager.FindByIdAsync(model.Id);
+                if (user != null)
+                {
+                    user.Name = model.Name;
+                    user.Email = model.Email;
+                    user.Reknown = model.Reknown;
+                    user.Bio = model.Bio;
+                    IdentityResult result = await _userManager.UpdateAsync(user);
+                    if (result.Succeeded)
+                    {
+                        return Ok(new { Success = true, message = "Successfully edited user!" });
+                    }
+                }
+            }
+            return BadRequest(Json(new { messages = ModelState.Values.SelectMany(v => v.Errors) }));
+        }
         //
         // POST: /Account/Login
         [HttpPost]
@@ -245,19 +266,13 @@ namespace CSC_Assignment_2.Controllers
                 BlobServices blobService = new BlobServices();
                 user.ProfilePictureImage = await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(imageModel.ImageBase64), imageModel.Id);
                 await _userManager.UpdateAsync(user);
-                return user.ProfilePictureImage+ sasKey;
+                return user.ProfilePictureImage + sasKey;
             }
-            else {
+            else
+            {
                 return null;
             }
         }
-
-        [HttpPost]
-        public string AccountSubscribe(ImageModel imageModel)
-        {
-            return null;
-        }
-
         //
         // GET: /Account/ExternalLoginCallback
         [HttpGet]
@@ -568,7 +583,8 @@ namespace CSC_Assignment_2.Controllers
             {
                 return user;
             }
-            else {
+            else
+            {
                 return null;
             }
         }
