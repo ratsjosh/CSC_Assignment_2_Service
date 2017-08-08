@@ -251,11 +251,14 @@ namespace CSC_Assignment_2.Controllers
 
         // DELETE: api/ApiWithActions/5
         [HttpDelete]
-        public async Task<IActionResult> DeleteAsync([FromBody]LoginModel model)
+        public async Task<IActionResult> DeleteByAccessTokenAsync(string accessToken)
         {
-            if (ModelState.IsValid)
+            if (!string.IsNullOrEmpty(accessToken))
             {
-                await Startup._sessionDbcontext._context.DeleteAsync(model);
+                List<ScanCondition> conditions = new List<ScanCondition>();
+                conditions.Add(new ScanCondition("AccessToken", ScanOperator.Equal, accessToken));
+                List<LoginModel> result = await Startup._sessionDbcontext._context.ScanAsync<LoginModel>(conditions).GetRemainingAsync();
+                await Startup._sessionDbcontext._context.DeleteAsync(result.FirstOrDefault());
                 return Ok();
             }
             else
