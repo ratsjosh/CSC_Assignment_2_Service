@@ -1,4 +1,5 @@
-﻿using Stripe;
+﻿using CSC_Assignment_2.Models;
+using Stripe;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace CSC_Assignment_2.Services
         }
 
         public string CreateSubscription(int cost, string planName) {
-            string id = new Guid().ToString();
+            string id = Guid.NewGuid().ToString();
             var newPlan = new StripePlanCreateOptions();
             newPlan.Id = id;
             newPlan.Amount = cost;           // all amounts on Stripe are in cents, pence, etc
@@ -27,24 +28,41 @@ namespace CSC_Assignment_2.Services
             return id;
         }
 
-        public void UpdateSubscription(string id, string planName, int cost = 0)
+        public void UpdateSubscription(string id, string planName)
         {
-            if (cost == 0)
-            {
-                var updatedPlan = new StripePlanUpdateOptions();
 
-                updatedPlan.Name = planName;
+            var updatedPlan = new StripePlanUpdateOptions();
 
-                var planService = new StripePlanService();
-                StripePlan response = planService.Update(id, updatedPlan);
-            }
-            else
-            {
-                string newId = CreateSubscription(cost, planName);
-                StripePlanService plan = new StripePlanService();
-                
+            updatedPlan.Name = planName;
 
-            }
+            var planService = new StripePlanService();
+            StripePlan response = planService.Update(id, updatedPlan);
+            
+        }
+
+        public string CreateStripeCustomer(string planId, ApplicationUser user) {
+            var myCustomer = new StripeCustomerCreateOptions();
+            myCustomer.Email = user.Email;
+
+            myCustomer.PlanId = planId;                          // only if you have a plan
+            myCustomer.TaxPercent = 20;                            // only if you are passing a plan, this tax percent will be added to the price.
+            myCustomer.Quantity = 1;                               // optional, defaults to 1
+
+            var customerService = new StripeCustomerService();
+            StripeCustomer stripeCustomer = customerService.Create(myCustomer);
+
+            return stripeCustomer.Id;
+        }
+
+        public IEnumerable<StripePlan> GetAllPlans()
+        {
+            var planService = new StripePlanService();
+            return planService.List(); 
+        }
+
+        public void TransferSubscription(string id) {
+            var planService = new StripePlanService();
+            StripePlan response = planService.Get(id);
         }
 
     }

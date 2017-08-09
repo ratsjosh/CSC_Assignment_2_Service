@@ -20,6 +20,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.AspNetCore.Cors;
+using Stripe;
 
 namespace CSC_Assignment_2.Controllers
 {
@@ -253,9 +254,21 @@ namespace CSC_Assignment_2.Controllers
         }
 
         [HttpPost]
-        public string AccountSubscribe(ImageModel imageModel)
+        public async Task<IActionResult> AccountSubscribeAsync(string planId, string userId)
         {
-            return null;
+            ApplicationUser user = await checkUserExistAsync(userId);
+            StripeServices ss = new StripeServices();
+            string stripeCustomerId = ss.CreateStripeCustomer(planId, user);
+            user.StripeToken = stripeCustomerId;
+            await _userManager.UpdateAsync(user);
+            return Ok();
+        }
+
+        [HttpGet]
+        public IEnumerable<StripePlan> GetAllSubscription ()
+        {
+            StripeServices ss = new StripeServices();
+            return ss.GetAllPlans();
         }
 
         //
