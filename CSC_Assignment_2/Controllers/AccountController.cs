@@ -71,7 +71,14 @@ namespace CSC_Assignment_2.Controllers
         [HttpGet]
         public IEnumerable<ApplicationUser> GetAll()
         {
-            return _userManager.Users;
+            List<ApplicationRole> model = new List<ApplicationRole>();
+            model = _roleManager.Roles.Where(x => x.NormalizedName.Equals("USER")).Select(r => new ApplicationRole
+            {
+                Id = r.Id,
+                CreatedDate = r.CreatedDate,
+                Description = r.Description
+            }).ToList();
+            return _userManager.Users.Where(x => x.Roles.Select(y => y.RoleId).Contains(model.FirstOrDefault().Id)).ToList();
         }
 
         // GET: /Account/Login
