@@ -20,6 +20,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.AspNetCore.Cors;
+using Stripe;
 
 namespace CSC_Assignment_2.Controllers
 {
@@ -280,6 +281,28 @@ namespace CSC_Assignment_2.Controllers
                 return null;
             }
         }
+<<<<<<< HEAD
+
+        [HttpPost]
+        public async Task<IActionResult> AccountSubscribeAsync(string planId, string userId)
+        {
+            ApplicationUser user = await checkUserExistAsync(userId);
+            StripeServices ss = new StripeServices();
+            string stripeCustomerId = ss.CreateStripeCustomer(planId, user);
+            user.StripeToken = stripeCustomerId;
+            await _userManager.UpdateAsync(user);
+            return Ok();
+        }
+
+        [HttpGet]
+        public IEnumerable<StripePlan> GetAllSubscription ()
+        {
+            StripeServices ss = new StripeServices();
+            return ss.GetAllPlans();
+        }
+
+=======
+>>>>>>> c1313ae828a793afc62741c4b031210d0de113e0
         //
         // GET: /Account/ExternalLoginCallback
         [HttpGet]

@@ -11,6 +11,7 @@ using CSC_Assignment_2.Services;
 using CSC_Assignment_2.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
+using CSC_Assignment_2.Data;
 
 namespace CSC_Assignment_2.Controllers
 {
@@ -25,6 +26,7 @@ namespace CSC_Assignment_2.Controllers
         private readonly ISmsSender _smsSender;
         private readonly string _externalCookieScheme;
         private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext _applicationDbContext;
 
         public SubscriptionController(
             UserManager<ApplicationUser> userManager,
@@ -33,7 +35,8 @@ namespace CSC_Assignment_2.Controllers
             IOptions<IdentityCookieOptions> identityCookieOptions,
             IEmailSender emailSender,
             ISmsSender smsSender,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ApplicationDbContext applicationDbContext)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -42,25 +45,52 @@ namespace CSC_Assignment_2.Controllers
             _emailSender = emailSender;
             _smsSender = smsSender;
             _configuration = configuration;
-        }
-        [HttpPost]
-        public string CreateSubscription()
-        {
-            StripeServices ss = new StripeServices();
-            ss.CreateSubscription(0, "");
-            return null;
+            _applicationDbContext = applicationDbContext;
         }
 
         [HttpPost]
-        public string AccountSubscription()
+        public IActionResult CreateSubscription([FromBody]SubscriptionViewModel svm)
         {
-            return null;
+            try
+            {
+                StripeServices ss = new StripeServices();
+                string id = ss.CreateSubscription(svm.price, svm.name);
+                SubscriptionModel sm = new SubscriptionModel();
+                sm.IdToken = id;
+                sm.IsActive = svm.status;
+                _applicationDbContext.SubscriptionModel.Add(sm);
+                _applicationDbContext.SaveChanges();
+                return Ok();
+
+            }
+            catch (Exception e) {
+                return BadRequest();
+            }
         }
 
         [HttpPut]
-        public string UpdateSubscription()
+        public IActionResult UpdateSubscription([FromBody]SubscriptionViewModel svm)
         {
-            return null;
+            StripeServices ss = new StripeServices();
+            try
+            {
+                SubscriptionModel sm = _applicationDbContext.SubscriptionModel.Where(t => t.IdToken == svm.id).First();
+                if (sm != null)
+                {
+                    ss.UpdateSubscription(svm.id, svm.name);
+                    sm.IsActive = svm.status;
+                    _applicationDbContext.SubscriptionModel.Update(sm);
+                    _applicationDbContext.SaveChanges();
+                    return Ok();
+                }
+                else {
+                    throw new Exception();
+                }
+            } catch (Exception e) {
+                return BadRequest();
+            }
         }
+
+
     }
 }
