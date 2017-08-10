@@ -51,9 +51,10 @@ namespace CSC_Assignment_2.Models
         {
             var username = context.Request.Form["username"];
             var password = context.Request.Form["password"];
-            var captcha  = context.Request.Form["captcha"];
+            var captcha = context.Request.Form["captcha"];
 
-            if (!await CheckCaptchaAsync(captcha)) {
+            if (!await CheckCaptchaAsync(captcha))
+            {
                 context.Response.StatusCode = 400;
                 await context.Response.WriteAsync("Capatcha is not valid!");
                 return;
@@ -64,6 +65,14 @@ namespace CSC_Assignment_2.Models
             {
                 context.Response.StatusCode = 400;
                 await context.Response.WriteAsync("Invalid username or password.");
+                return;
+            }
+
+            var account = VerifyEmail(identity);
+            if (account.Result == null)
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("Email has not been verified.");
                 return;
             }
 
@@ -108,15 +117,26 @@ namespace CSC_Assignment_2.Models
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(JsonConvert.SerializeObject(response, new JsonSerializerSettings { Formatting = Formatting.Indented }));
         }
-        private async Task<ClaimsIdentity> GetIdentityAsync(string username, string password)
+        private async Task<ApplicationUser> GetIdentityAsync(string username, string password)
         {
             var user = await _userManager.FindByEmailAsync(username);
             if (user != null)
             {
                 if (await _userManager.CheckPasswordAsync(user, password))
-                    return await Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(username, "Token"), new Claim[] { }));
+                {
+                    return user;
+                }
             }
+            // Credentials are invalid, or account doesn't exist
+            return null;
+        }
 
+        private async Task<ClaimsIdentity> VerifyEmail(ApplicationUser user)
+        {
+            if (user.EmailConfirmed)
+            {
+                return await Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(user.UserName, "Token"), new Claim[] { }));
+            }
             // Credentials are invalid, or account doesn't exist
             return await Task.FromResult<ClaimsIdentity>(null);
         }
@@ -140,7 +160,8 @@ namespace CSC_Assignment_2.Models
 
                 return CaptchaResponse.success;
             }
-            catch {
+            catch
+            {
                 return false;
             }
         }
