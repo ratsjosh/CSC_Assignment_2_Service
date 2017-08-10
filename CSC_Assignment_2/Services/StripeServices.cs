@@ -10,11 +10,13 @@ namespace CSC_Assignment_2.Services
     public class StripeServices
     {
 
-        public StripeServices() {
+        public StripeServices()
+        {
             StripeConfiguration.SetApiKey("sk_test_7jStegpTg5BoZBswviBiAfV0");
         }
 
-        public string CreateSubscription(int cost, string planName) {
+        public string CreateSubscription(int cost, string planName)
+        {
             string id = Guid.NewGuid().ToString();
             var newPlan = new StripePlanCreateOptions();
             newPlan.Id = id;
@@ -40,7 +42,8 @@ namespace CSC_Assignment_2.Services
 
         }
 
-        public void unsubscribePlan(string customerId) {
+        public void UnsubscribePlan(string customerId)
+        {
             var customerService = new StripeCustomerService();
             StripeCustomer stripeCustomer = customerService.Get(customerId);
             var subscriptionId = stripeCustomer.Subscriptions.First().Id;
@@ -49,8 +52,9 @@ namespace CSC_Assignment_2.Services
             subscriptionService.Cancel(subscriptionId);
         }
 
-        public string CreateStripeCustomer(string tokenId, string planId, ApplicationUser user) {
-          
+        public string CreateStripeCustomer(string tokenId, string planId, ApplicationUser user)
+        {
+
             var myCustomer = new StripeCustomerCreateOptions();
             myCustomer.Email = user.Email;
             myCustomer.SourceToken = tokenId;
@@ -63,7 +67,8 @@ namespace CSC_Assignment_2.Services
             return stripeCustomer.Id;
         }
 
-        public StripePlan getUserPlan(string customerId) {
+        public StripePlan GetUserPlan(string customerId)
+        {
             var customerService = new StripeCustomerService();
             StripeCustomer stripeCustomer = customerService.Get(customerId);
             return stripeCustomer.Subscriptions.First().StripePlan;
@@ -93,22 +98,24 @@ namespace CSC_Assignment_2.Services
             // optional StripeSubscriptionUpdateOptions            return null;
         }
 
-        public void CreateCard(string customerId, string tokenId) { 
+        public void CreateCard(string customerId, string tokenId)
+        {
             var myCard = new StripeCardCreateOptions();
 
             myCard.SourceToken = tokenId;
 
-	        var cardService = new StripeCardService();
+            var cardService = new StripeCardService();
             StripeCard stripeCard = cardService.Create(customerId, myCard); // optional isRecipient
         }
 
         public IEnumerable<StripePlan> GetAllPlans()
         {
             var planService = new StripePlanService();
-            return planService.List(); 
+            return planService.List();
         }
 
-        public void TransferSubscription(string id) {
+        public void TransferSubscription(string id)
+        {
             var planService = new StripePlanService();
             StripePlan response = planService.Get(id);
         }

@@ -19,7 +19,7 @@ namespace CSC_Assignment_2.Controllers
         public async Task<string> SendEmailAsync([FromBody]EmailObject emailModel)
         {
             EmailServices es = new EmailServices();
-            var reply = await es.sendEmailAsync(emailModel.To, emailModel.Subject, emailModel.Body, emailModel.EmailType);
+            var reply = await es.SendEmailAsync(emailModel.To, emailModel.Subject, emailModel.Body, emailModel.EmailType);
             return reply;
         }
     }
