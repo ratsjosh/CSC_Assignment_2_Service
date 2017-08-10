@@ -53,7 +53,7 @@ namespace CSC_Assignment_2.Models
             var password = context.Request.Form["password"];
             var captcha  = context.Request.Form["captcha"];
 
-            if (!await checkCaptchaAsync(captcha)) {
+            if (!await CheckCaptchaAsync(captcha)) {
                 context.Response.StatusCode = 400;
                 await context.Response.WriteAsync("Capatcha is not valid!");
                 return;
@@ -119,7 +119,7 @@ namespace CSC_Assignment_2.Models
             return await Task.FromResult<ClaimsIdentity>(null);
         }
 
-        private async Task<bool> checkCaptchaAsync(string captcha)
+        private async Task<bool> CheckCaptchaAsync(string captcha)
         {
             try
             {

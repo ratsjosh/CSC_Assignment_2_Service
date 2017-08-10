@@ -46,7 +46,6 @@ namespace CSC_Assignment_2.Controllers
                 conditions.Add(new ScanCondition("AccessToken", ScanOperator.Equal, token.AccessToken));
                 List<LoginModel> result = await Startup._sessionDbcontext._context.ScanAsync<LoginModel>(conditions).GetRemainingAsync();
                 LoginModel model = result.FirstOrDefault();
-                model.SessionExpiration = token.SessionExpiration;
                 await Startup._sessionDbcontext._context.SaveAsync(model);
                 return Ok();
             }
