@@ -76,7 +76,14 @@ namespace CSC_Assignment_2.Controllers
         [HttpGet]
         public IEnumerable<ApplicationUser> GetAll()
         {
-            return _userManager.Users;
+            List<ApplicationRole> model = new List<ApplicationRole>();
+            model = _roleManager.Roles.Where(x => x.NormalizedName.Equals("USER")).Select(r => new ApplicationRole
+            {
+                Id = r.Id,
+                CreatedDate = r.CreatedDate,
+                Description = r.Description
+            }).ToList();
+            return _userManager.Users.Where(x => x.Roles.Select(y => y.RoleId).Contains(model.FirstOrDefault().Id)).ToList();
         }
 
         // GET: /Account/Login
@@ -279,6 +286,7 @@ namespace CSC_Assignment_2.Controllers
             }
         }
 
+    
         [HttpPost]
         public async Task<IActionResult> AccountSubscribeAsync(string tokenId, string planId, string userId)
         {
@@ -347,7 +355,6 @@ namespace CSC_Assignment_2.Controllers
             return allPlans;
         }
 
-
         [HttpGet]
         [AllowAnonymous]
         public List<StripePlan> GetAllSubscription()
@@ -355,6 +362,7 @@ namespace CSC_Assignment_2.Controllers
             StripeServices ss = new StripeServices();
             return ss.GetAllPlans().ToList();
         }
+
         //
         // GET: /Account/ExternalLoginCallback
         [HttpGet]
