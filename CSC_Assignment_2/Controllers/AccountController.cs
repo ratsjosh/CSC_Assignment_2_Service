@@ -154,30 +154,6 @@ namespace CSC_Assignment_2.Controllers
             return View(model);
         }
 
-        //[HttpPost]
-        //[AllowAnonymous]
-        //protected Task<IPrincipal> AuthenticateJwtToken([FromBody]string token)
-        //{
-        //    string username;
-
-        //    if (ValidateToken(token, out username))
-        //    {
-        //        // based on username to get more information from database in order to build local identity
-        //        var claims = new List<Claim>
-        //    {
-        //        new Claim(ClaimTypes.Name, username)
-        //        // Add more claims if needed: Roles, ...
-        //    };
-
-        //        var identity = new ClaimsIdentity(claims, "Jwt");
-        //        IPrincipal user = new ClaimsPrincipal(identity);
-
-        //        return Task.FromResult(user);
-        //    }
-
-        //    return Task.FromResult<IPrincipal>(null);
-        //}
-
         // POST: /Account/Register
         [HttpPost]
         [AllowAnonymous]

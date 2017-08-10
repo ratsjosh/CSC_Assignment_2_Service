@@ -34,53 +34,27 @@ namespace CSC_Assignment_2.Controllers
             IConfiguration configuration)
         {
             _configuration = configuration;
-            //string accessKey = _configuration.GetConnectionString("DynamoDb:AccessKey");
-            //string secretKey = _configuration.GetConnectionString("DynamoDb:SecretKey");
-            //_credentials = new BasicAWSCredentials(accessKey, secretKey);
-            //_client = new AmazonDynamoDBClient(_credentials, Amazon.RegionEndpoint.USWest2);
-            //// Verify if table has been generated
-            //Task.Run(() => VerifyTableAsync("Talents")).Wait();
         }
 
-        //public async Task VerifyTableAsync(string tableName)
-        //{
-        //    var tableResponse = await _client.ListTablesAsync();
-        //    if (!tableResponse.TableNames.Contains(tableName))
-        //    {
-        //        await _client.CreateTableAsync(new CreateTableRequest
-        //        {
-        //            TableName = tableName,
-        //            ProvisionedThroughput = new ProvisionedThroughput
-        //            {
-        //                ReadCapacityUnits = 3,
-        //                WriteCapacityUnits = 1
-        //            },
-        //            KeySchema = new List<KeySchemaElement>
-        //            {
-        //                new KeySchemaElement
-        //                {
-        //                    AttributeName = "AccessToken",
-        //                    KeyType = KeyType.HASH
-        //                }
-        //            },
-        //            AttributeDefinitions = new List<AttributeDefinition>
-        //            {
-        //                new AttributeDefinition {
-        //                    AttributeName = "AccessToken",
-        //                    AttributeType =ScalarAttributeType.S
-        //                }
-        //            }
-        //        });
-        //        bool isTableAvailable = false;
-        //        while (!isTableAvailable)
-        //        {
-        //            Thread.Sleep(1000);
-        //            var tableStatus = await _client.DescribeTableAsync(tableName);
-        //            isTableAvailable = tableStatus.Table.TableStatus == "ACTIVE";
-        //        }
-        //    }
-        //    _context = new DynamoDBContext(_client);
-        //}
+        [HttpPost]
+        public async Task<IActionResult> UpdateSessionExpirationByAccessTokenAsync([FromBody]TokenModel token)
+        {
+            if (ModelState.IsValid)
+            {
+
+                List<ScanCondition> conditions = new List<ScanCondition>();
+                conditions.Add(new ScanCondition("AccessToken", ScanOperator.Equal, token.AccessToken));
+                List<LoginModel> result = await Startup._sessionDbcontext._context.ScanAsync<LoginModel>(conditions).GetRemainingAsync();
+                LoginModel model = result.FirstOrDefault();
+                model.SessionExpiration = token.SessionExpiration;
+                await Startup._sessionDbcontext._context.SaveAsync(model);
+                return Ok();
+            }
+            else
+            {
+                return BadRequest(ModelState);
+            }
+        }
 
         [HttpPost]
         [AllowAnonymous]
