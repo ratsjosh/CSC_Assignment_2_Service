@@ -10,6 +10,7 @@ using CSC_Assignment_2.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.IO;
 using Microsoft.Extensions.Configuration;
+using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace CSC_Assignment_2.Controllers
 {
@@ -88,7 +89,29 @@ namespace CSC_Assignment_2.Controllers
             //return uploadedUri;
         }
 
+        // GET: /api/Image/GetAllImage
+        [HttpPut]
+        //[ValidateAntiForgeryToken]
+        public async Task<bool> ChangeStorage(string userId, bool state)
+        {
+            BlobServices blobService = new BlobServices();
+            var s = BlobContainerPublicAccessType.Blob;
+            if (!state) {
+                s = BlobContainerPublicAccessType.Container;
+            }
 
+            return await blobService.changeContainerState(userId, s);
+        }
+
+        // GET: /api/Image/GetAllImage
+        [HttpGet]
+        //[ValidateAntiForgeryToken]
+        public async Task<BlobContainerPublicAccessType> GetStorageState(string userId)
+        {
+            BlobServices blobService = new BlobServices();
+
+            return await blobService.getContainerState(userId);
+        }
 
         // GET: /api/Image/GetAllImage
         [HttpGet]
@@ -97,8 +120,27 @@ namespace CSC_Assignment_2.Controllers
         {
             string userId = Request.Query["userId"];
             BlobServices blobService = new BlobServices();
-           
             return await blobService.GetAllImageFromContainerAsync(userId);
+
+
+        }
+
+        [HttpGet]
+        //[ValidateAntiForgeryToken]
+        public async Task<List<string>> GetAllImageSingleUser()
+        {
+            string userId = Request.Query["userId"];
+            BlobServices blobService = new BlobServices();
+
+            if (await blobService.getContainerState(userId) == BlobContainerPublicAccessType.Container)
+            {
+                return await blobService.GetAllImageFromContainerAsync(userId);
+            }
+            else
+            {
+                return null;
+            }
+
         }
     }
 }

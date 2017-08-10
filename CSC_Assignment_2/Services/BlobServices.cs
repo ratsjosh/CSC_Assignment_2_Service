@@ -36,6 +36,33 @@ namespace CSC_Assignment_2.Services
             return blob.Uri.AbsoluteUri;
         }
 
+        public async Task<bool> changeContainerState(string containerName, BlobContainerPublicAccessType type) {
+            try
+            {
+                CloudBlobContainer c = client.GetContainerReference(containerName);
+                await c.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = type });
+
+                return true;
+            }
+            catch (Exception e) {
+                return false;
+            }
+        }
+
+        public async Task<BlobContainerPublicAccessType> getContainerState(string containerName)
+        {
+            try
+            {
+                CloudBlobContainer c = client.GetContainerReference(containerName);
+
+                return (await c.GetPermissionsAsync()).PublicAccess;
+            }
+            catch (Exception e)
+            {
+                return BlobContainerPublicAccessType.Unknown;
+            }
+        }
+
         public async Task<string> DeleteImageFromBlobStorageAsync(Byte[] imageByte, string containerName)
         {
             CloudBlobContainer c = client.GetContainerReference(containerName);
