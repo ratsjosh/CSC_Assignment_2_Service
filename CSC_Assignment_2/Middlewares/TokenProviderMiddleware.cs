@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -50,6 +51,13 @@ namespace CSC_Assignment_2.Models
         {
             var username = context.Request.Form["username"];
             var password = context.Request.Form["password"];
+            var captcha  = context.Request.Form["captcha"];
+
+            if (!await checkCaptchaAsync(captcha)) {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("Capatcha is not valid!");
+                return;
+            }
 
             var identity = await GetIdentityAsync(username, password);
             if (identity == null)
@@ -109,6 +117,30 @@ namespace CSC_Assignment_2.Models
 
             // Credentials are invalid, or account doesn't exist
             return await Task.FromResult<ClaimsIdentity>(null);
+        }
+
+        private async Task<bool> checkCaptchaAsync(string captcha)
+        {
+            try
+            {
+                HttpClient client = new HttpClient();
+
+                var values = new Dictionary<string, string>
+                {
+                   { "secret", "6LfvbSwUAAAAADf2tvnH_xhdYPMllULz9xdFfcrg" },
+                   { "response", captcha }
+                };
+
+                var content = new FormUrlEncodedContent(values);
+
+                var response = await client.PostAsync("https://www.google.com/recaptcha/api/siteverify", content);
+                dynamic CaptchaResponse = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync());
+
+                return CaptchaResponse.success;
+            }
+            catch {
+                return false;
+            }
         }
     }
 }
