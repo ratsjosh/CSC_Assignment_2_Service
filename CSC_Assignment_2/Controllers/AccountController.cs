@@ -281,8 +281,8 @@ namespace CSC_Assignment_2.Controllers
                 return null;
             }
         }
-<<<<<<< HEAD
 
+    
         [HttpPost]
         public async Task<IActionResult> AccountSubscribeAsync(string planId, string userId)
         {
@@ -301,8 +301,6 @@ namespace CSC_Assignment_2.Controllers
             return ss.GetAllPlans();
         }
 
-=======
->>>>>>> c1313ae828a793afc62741c4b031210d0de113e0
         //
         // GET: /Account/ExternalLoginCallback
         [HttpGet]
