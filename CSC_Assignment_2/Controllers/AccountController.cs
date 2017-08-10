@@ -270,18 +270,24 @@ namespace CSC_Assignment_2.Controllers
         [HttpPost]
         public async Task<string> UploadProfilePicAsync(ImageModel imageModel)
         {
-            ApplicationUser user = await checkUserExistAsync(imageModel.Id);
+            try
+            {
+                ApplicationUser user = await checkUserExistAsync(imageModel.Id);
 
-            if (user != null)
-            {
-                string sasKey = Startup.Configuration.GetConnectionString("BlobSASkey");
-                BlobServices blobService = new BlobServices();
-                user.ProfilePictureImage = await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(imageModel.ImageBase64), imageModel.Id);
-                await _userManager.UpdateAsync(user);
-                return user.ProfilePictureImage + sasKey;
+                if (user != null)
+                {
+                    string sasKey = Startup.Configuration.GetConnectionString("BlobSASkey");
+                    BlobServices blobService = new BlobServices();
+                    user.ProfilePictureImage = await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(imageModel.ImageBase64), imageModel.Id);
+                    await _userManager.UpdateAsync(user);
+                    return user.ProfilePictureImage + sasKey;
+                }
+                else
+                {
+                    return null;
+                }
             }
-            else
-            {
+            catch (Exception e) {
                 return null;
             }
         }
@@ -293,11 +299,25 @@ namespace CSC_Assignment_2.Controllers
             try
             {
                 ApplicationUser user = await checkUserExistAsync(userId);
-                StripeServices ss = new StripeServices();
-                string stripeCustomerId = ss.CreateStripeCustomer(tokenId, planId, user);
-                user.StripeToken = stripeCustomerId;
-                await _userManager.UpdateAsync(user);
-                return Ok();
+                if (user != null)
+                {
+                    StripeServices ss = new StripeServices();
+                    if (string.IsNullOrWhiteSpace(user.StripeToken))
+                    {
+                        string stripeCustomerId = ss.CreateStripeCustomer(tokenId, planId, user);
+                        user.StripeToken = stripeCustomerId;
+                        await _userManager.UpdateAsync(user);
+                        return Ok();
+                    }
+                    else {
+                        string stripeCustomerId = ss.SubscribeAccountPlan(planId, user.StripeToken);
+                        return Ok();
+                    }
+                }
+                else
+                {
+                    return BadRequest();
+                }
             }
             catch (Exception e) {
                 return BadRequest();
@@ -305,17 +325,45 @@ namespace CSC_Assignment_2.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> getSubscription(string userId)
+        public async Task<StripePlan> getSubscription(string userId)
         {
             try
             {
                 ApplicationUser user = await checkUserExistAsync(userId);
-                StripeServices ss = new StripeServices();
-                string stripeCustomerId = user.StripeToken;
+                if (user != null)
+                {
+                    StripeServices ss = new StripeServices();
+                    string stripeCustomerId = user.StripeToken;
+                    return ss.getUserPlan(stripeCustomerId);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+        }
 
-
-
-                return Ok();
+        [HttpPut]
+        public async Task<IActionResult> ChangeAccountSubscribeAsync(string planId, string userId)
+        {
+            try
+            {
+                ApplicationUser user = await checkUserExistAsync(userId);
+                if (user != null)
+                {
+                    string stripeCustomerId = user.StripeToken;
+                    StripeServices ss = new StripeServices();
+                    ss.ChangeAccountPlan(planId, stripeCustomerId);
+                    return Ok();
+                }
+                else
+                {
+                    return BadRequest();
+                }
             }
             catch (Exception e)
             {
@@ -324,15 +372,21 @@ namespace CSC_Assignment_2.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> ChangeAccountSubscribeAsync(string tokenId, string planId, string userId)
+        public async Task<IActionResult> UnsubscribeAccountAsync(string userId)
         {
             try
             {
                 ApplicationUser user = await checkUserExistAsync(userId);
-                string stripeCustomerId = user.StripeToken;
-                StripeServices ss = new StripeServices();
-                ss.ChangeAccountPlan(tokenId, planId, stripeCustomerId);
-                return Ok();
+                if (user != null)
+                {
+                    string stripeCustomerId = user.StripeToken;
+                    StripeServices ss = new StripeServices();
+                    ss.unsubscribePlan(stripeCustomerId);
+                    return Ok();
+                }
+                else {
+                    return BadRequest();
+                }
             }
             catch (Exception e)
             {
