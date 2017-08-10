@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.AspNetCore.Cors;
 using Stripe;
+using CSC_Assignment_2.Data;
 
 namespace CSC_Assignment_2.Controllers
 {
@@ -35,6 +36,7 @@ namespace CSC_Assignment_2.Controllers
         private readonly ILogger _logger;
         private readonly string _externalCookieScheme;
         private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext _applicationDbContext;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
@@ -44,7 +46,8 @@ namespace CSC_Assignment_2.Controllers
             IEmailSender emailSender,
             ISmsSender smsSender,
             ILoggerFactory loggerFactory,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ApplicationDbContext applicationDbContext)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -54,6 +57,7 @@ namespace CSC_Assignment_2.Controllers
             _smsSender = smsSender;
             _logger = loggerFactory.CreateLogger<AccountController>();
             _configuration = configuration;
+            _applicationDbContext = applicationDbContext;
         }
 
         // GET: /Account/Login
@@ -242,39 +246,151 @@ namespace CSC_Assignment_2.Controllers
         [HttpPost]
         public async Task<string> UploadProfilePicAsync(ImageModel imageModel)
         {
-            ApplicationUser user = await checkUserExistAsync(imageModel.Id);
+            try
+            {
+                ApplicationUser user = await checkUserExistAsync(imageModel.Id);
 
-            if (user != null)
-            {
-                string sasKey = Startup.Configuration.GetConnectionString("BlobSASkey");
-                BlobServices blobService = new BlobServices();
-                user.ProfilePictureImage = await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(imageModel.ImageBase64), imageModel.Id);
-                await _userManager.UpdateAsync(user);
-                return user.ProfilePictureImage + sasKey;
+                if (user != null)
+                {
+                    string sasKey = Startup.Configuration.GetConnectionString("BlobSASkey");
+                    BlobServices blobService = new BlobServices();
+                    user.ProfilePictureImage = await blobService.UploadImageToBlobStorageAsync(Convert.FromBase64String(imageModel.ImageBase64), imageModel.Id);
+                    await _userManager.UpdateAsync(user);
+                    return user.ProfilePictureImage + sasKey;
+                }
+                else
+                {
+                    return null;
+                }
             }
-            else
-            {
+            catch (Exception e) {
                 return null;
             }
         }
 
     
         [HttpPost]
-        public async Task<IActionResult> AccountSubscribeAsync(string planId, string userId)
+        public async Task<IActionResult> AccountSubscribeAsync(string tokenId, string planId, string userId)
         {
-            ApplicationUser user = await checkUserExistAsync(userId);
-            StripeServices ss = new StripeServices();
-            string stripeCustomerId = ss.CreateStripeCustomer(planId, user);
-            user.StripeToken = stripeCustomerId;
-            await _userManager.UpdateAsync(user);
-            return Ok();
+            try
+            {
+                ApplicationUser user = await checkUserExistAsync(userId);
+                if (user != null)
+                {
+                    StripeServices ss = new StripeServices();
+                    if (string.IsNullOrWhiteSpace(user.StripeToken))
+                    {
+                        string stripeCustomerId = ss.CreateStripeCustomer(tokenId, planId, user);
+                        user.StripeToken = stripeCustomerId;
+                        await _userManager.UpdateAsync(user);
+                        return Ok();
+                    }
+                    else {
+                        string stripeCustomerId = ss.SubscribeAccountPlan(planId, user.StripeToken);
+                        return Ok();
+                    }
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch (Exception e) {
+                return BadRequest();
+            }
         }
 
         [HttpGet]
-        public IEnumerable<StripePlan> GetAllSubscription ()
+        public async Task<StripePlan> getSubscription(string userId)
+        {
+            try
+            {
+                ApplicationUser user = await checkUserExistAsync(userId);
+                if (user != null)
+                {
+                    StripeServices ss = new StripeServices();
+                    string stripeCustomerId = user.StripeToken;
+                    return ss.getUserPlan(stripeCustomerId);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> ChangeAccountSubscribeAsync(string planId, string userId)
+        {
+            try
+            {
+                ApplicationUser user = await checkUserExistAsync(userId);
+                if (user != null)
+                {
+                    string stripeCustomerId = user.StripeToken;
+                    StripeServices ss = new StripeServices();
+                    ss.ChangeAccountPlan(planId, stripeCustomerId);
+                    return Ok();
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> UnsubscribeAccountAsync(string userId)
+        {
+            try
+            {
+                ApplicationUser user = await checkUserExistAsync(userId);
+                if (user != null)
+                {
+                    string stripeCustomerId = user.StripeToken;
+                    StripeServices ss = new StripeServices();
+                    ss.unsubscribePlan(stripeCustomerId);
+                    return Ok();
+                }
+                else {
+                    return BadRequest();
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public List<StripePlan> GetAllActiveSubscription ()
         {
             StripeServices ss = new StripeServices();
-            return ss.GetAllPlans();
+            var allPlans = ss.GetAllPlans().ToList();
+            var notActivePlans = _applicationDbContext.SubscriptionModel.Where(t => t.IsActive == false).ToList();
+            foreach (var singleNotActivePlan in notActivePlans) {
+                    var sm = allPlans.Where(t => t.Id == singleNotActivePlan.IdToken).First();
+                    allPlans.Remove(sm);
+            }
+
+            return allPlans;
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public List<StripePlan> GetAllSubscription()
+        {
+            StripeServices ss = new StripeServices();
+            return ss.GetAllPlans().ToList();
         }
 
         //

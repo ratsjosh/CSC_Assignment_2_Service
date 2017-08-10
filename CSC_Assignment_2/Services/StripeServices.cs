@@ -37,21 +37,69 @@ namespace CSC_Assignment_2.Services
 
             var planService = new StripePlanService();
             StripePlan response = planService.Update(id, updatedPlan);
-            
+
         }
 
-        public string CreateStripeCustomer(string planId, ApplicationUser user) {
+        public void unsubscribePlan(string customerId) {
+            var customerService = new StripeCustomerService();
+            StripeCustomer stripeCustomer = customerService.Get(customerId);
+            var subscriptionId = stripeCustomer.Subscriptions.First().Id;
+
+            var subscriptionService = new StripeSubscriptionService();
+            subscriptionService.Cancel(subscriptionId);
+        }
+
+        public string CreateStripeCustomer(string tokenId, string planId, ApplicationUser user) {
+          
             var myCustomer = new StripeCustomerCreateOptions();
             myCustomer.Email = user.Email;
-
+            myCustomer.SourceToken = tokenId;
             myCustomer.PlanId = planId;                          // only if you have a plan
-            myCustomer.TaxPercent = 20;                            // only if you are passing a plan, this tax percent will be added to the price.
             myCustomer.Quantity = 1;                               // optional, defaults to 1
 
             var customerService = new StripeCustomerService();
             StripeCustomer stripeCustomer = customerService.Create(myCustomer);
 
             return stripeCustomer.Id;
+        }
+
+        public StripePlan getUserPlan(string customerId) {
+            var customerService = new StripeCustomerService();
+            StripeCustomer stripeCustomer = customerService.Get(customerId);
+            return stripeCustomer.Subscriptions.First().StripePlan;
+        }
+
+        public string ChangeAccountPlan(string planId, string customerId)
+        {
+            var customerService = new StripeCustomerService();
+            StripeCustomer stripeCustomer = customerService.Get(customerId);
+            var subscriptionId = stripeCustomer.Subscriptions.First().Id;
+
+            var subscriptionService = new StripeSubscriptionService();
+            StripeSubscriptionUpdateOptions ssuo = new StripeSubscriptionUpdateOptions();
+            ssuo.PlanId = planId;
+
+            StripeSubscription stripeSubscription = subscriptionService.Update(subscriptionId, ssuo);
+
+            return null;
+            // optional StripeSubscriptionUpdateOptions            return null;
+        }
+
+        public string SubscribeAccountPlan(string planId, string customerId)
+        {
+            var subscriptionService = new StripeSubscriptionService();
+            StripeSubscription stripeSubscription = subscriptionService.Create(customerId, planId);
+            return null;
+            // optional StripeSubscriptionUpdateOptions            return null;
+        }
+
+        public void CreateCard(string customerId, string tokenId) { 
+            var myCard = new StripeCardCreateOptions();
+
+            myCard.SourceToken = tokenId;
+
+	        var cardService = new StripeCardService();
+            StripeCard stripeCard = cardService.Create(customerId, myCard); // optional isRecipient
         }
 
         public IEnumerable<StripePlan> GetAllPlans()
