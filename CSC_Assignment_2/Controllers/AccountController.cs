@@ -187,7 +187,7 @@ namespace CSC_Assignment_2.Controllers
                     var callbackUrl = Url.Action(nameof(ConfirmEmail), "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
                     URLShortenerService urlShortener = new URLShortenerService();
 
-                    await new EmailServices().sendEmailAsync(model.Email, "Confirm your account",
+                    await new EmailServices().SendEmailAsync(model.Email, "Confirm your account",
                         urlShortener.ShortenIt(callbackUrl), EmailServices.EmailType.Register);
 
                     ApplicationRole mRole = null;
@@ -301,7 +301,7 @@ namespace CSC_Assignment_2.Controllers
         }
 
         [HttpGet]
-        public async Task<StripePlan> getSubscription(string userId)
+        public async Task<StripePlan> GetSubscription(string userId)
         {
             try
             {
@@ -310,7 +310,7 @@ namespace CSC_Assignment_2.Controllers
                 {
                     StripeServices ss = new StripeServices();
                     string stripeCustomerId = user.StripeToken;
-                    return ss.getUserPlan(stripeCustomerId);
+                    return ss.GetUserPlan(stripeCustomerId);
                 }
                 else
                 {
@@ -357,7 +357,7 @@ namespace CSC_Assignment_2.Controllers
                 {
                     string stripeCustomerId = user.StripeToken;
                     StripeServices ss = new StripeServices();
-                    ss.unsubscribePlan(stripeCustomerId);
+                    ss.UnsubscribePlan(stripeCustomerId);
                     return Ok();
                 }
                 else {

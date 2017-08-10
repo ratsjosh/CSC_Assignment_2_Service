@@ -14,7 +14,7 @@ namespace CSC_Assignment_2.Services
         public EmailServices() {
         }
 
-        public async Task<string> sendEmailAsync(string to, string subject, string body, EmailType type, string from = "talentsearchcustomerservice@gmail.com")
+        public async Task<string> SendEmailAsync(string to, string subject, string body, EmailType type, string from = "talentsearchcustomerservice@gmail.com")
         {
             requestBody = new ServiceReferenceSMTP.SendRequestBody();
             requestBody.msgTo = to;
@@ -22,7 +22,7 @@ namespace CSC_Assignment_2.Services
 
 
 
-            requestBody.msgBody = getTemplate(type, body);
+            requestBody.msgBody = GetTemplate(type, body);
 
             requestBody.msgSubject = subject;
             ServiceReferenceSMTP.SendRequest sendRequest = new ServiceReferenceSMTP.SendRequest(requestBody);
@@ -34,7 +34,7 @@ namespace CSC_Assignment_2.Services
             return result.Body.SendResult;
         }
 
-        public string getTemplate(EmailType type, string msg) {
+        public string GetTemplate(EmailType type, string msg) {
 
             switch (type) {
 
