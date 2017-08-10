@@ -86,6 +86,34 @@ namespace CSC_Assignment_2.Controllers
             return _userManager.Users.Where(x => x.Roles.Select(y => y.RoleId).Contains(model.FirstOrDefault().Id)).ToList();
         }
 
+        // GET: /Account
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<bool> AuthenticateAdminAccountAsync(AdminLoginViewModel adminModel)
+        {
+            var admin = await _userManager.FindByEmailAsync(adminModel.Email);
+            if (admin != null)
+            {
+                if (await _userManager.CheckPasswordAsync(admin, adminModel.Password))
+                {
+                    List<ApplicationRole> model = new List<ApplicationRole>();
+                    model = _roleManager.Roles.Where(x => x.NormalizedName.Equals("ADMIN")).Select(r => new ApplicationRole
+                    {
+                        Id = r.Id,
+                        CreatedDate = r.CreatedDate,
+                        Description = r.Description
+                    }).ToList();
+                    List<ApplicationUser> admins = _userManager.Users.Where(x => x.Roles.Select(y => y.RoleId).Contains(model.FirstOrDefault().Id)).ToList();
+                    if (admins.Contains(admin))
+                    {
+                        return true;
+                    }
+                }
+            }
+            // Credentials are invalid, or account doesn't exist
+            return false;
+        }
+
         // GET: /Account/Login
         [HttpGet]
         public async Task<string> GetUserIdByEmailAsync(string email)
@@ -263,12 +291,13 @@ namespace CSC_Assignment_2.Controllers
                     return null;
                 }
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 return null;
             }
         }
 
-    
+
         [HttpPost]
         public async Task<IActionResult> AccountSubscribeAsync(string tokenId, string planId, string userId)
         {
@@ -285,7 +314,8 @@ namespace CSC_Assignment_2.Controllers
                         await _userManager.UpdateAsync(user);
                         return Ok();
                     }
-                    else {
+                    else
+                    {
                         string stripeCustomerId = ss.SubscribeAccountPlan(planId, user.StripeToken);
                         return Ok();
                     }
@@ -295,7 +325,8 @@ namespace CSC_Assignment_2.Controllers
                     return BadRequest();
                 }
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 return BadRequest();
             }
         }
@@ -360,7 +391,8 @@ namespace CSC_Assignment_2.Controllers
                     ss.UnsubscribePlan(stripeCustomerId);
                     return Ok();
                 }
-                else {
+                else
+                {
                     return BadRequest();
                 }
             }
@@ -372,14 +404,15 @@ namespace CSC_Assignment_2.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public List<StripePlan> GetAllActiveSubscription ()
+        public List<StripePlan> GetAllActiveSubscription()
         {
             StripeServices ss = new StripeServices();
             var allPlans = ss.GetAllPlans().ToList();
             var notActivePlans = _applicationDbContext.SubscriptionModel.Where(t => t.IsActive == false).ToList();
-            foreach (var singleNotActivePlan in notActivePlans) {
-                    var sm = allPlans.Where(t => t.Id == singleNotActivePlan.IdToken).First();
-                    allPlans.Remove(sm);
+            foreach (var singleNotActivePlan in notActivePlans)
+            {
+                var sm = allPlans.Where(t => t.Id == singleNotActivePlan.IdToken).First();
+                allPlans.Remove(sm);
             }
 
             return allPlans;

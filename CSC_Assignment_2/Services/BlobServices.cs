@@ -13,20 +13,21 @@ namespace CSC_Assignment_2.Services
 
     public class BlobServices
     {
-        private CloudStorageAccount account { get; set; }
-        private CloudBlobClient client { get; set; }
+        private CloudStorageAccount Account { get; set; }
+        private CloudBlobClient Client { get; set; }
 
-        public BlobServices() {
+        public BlobServices()
+        {
             string BlobAccountName = Startup.Configuration.GetConnectionString("BlobAccountName");
             string BlobKey = Startup.Configuration.GetConnectionString("BlobKey");
             var creds = new StorageCredentials(BlobAccountName, BlobKey);
-            client = new CloudStorageAccount(creds, true).CreateCloudBlobClient();
-            client.DefaultRequestOptions.ParallelOperationThreadCount = Environment.ProcessorCount;
+            Client = new CloudStorageAccount(creds, true).CreateCloudBlobClient();
+            Client.DefaultRequestOptions.ParallelOperationThreadCount = Environment.ProcessorCount;
         }
 
         public async Task<string> UploadImageToBlobStorageAsync(Byte[] imageByte, string containerName)
         {
-            CloudBlobContainer c = client.GetContainerReference(containerName);
+            CloudBlobContainer c = Client.GetContainerReference(containerName);
             await c.CreateIfNotExistsAsync();
             await c.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
 
@@ -38,7 +39,7 @@ namespace CSC_Assignment_2.Services
 
         public async Task<string> DeleteImageFromBlobStorageAsync(Byte[] imageByte, string containerName)
         {
-            CloudBlobContainer c = client.GetContainerReference(containerName);
+            CloudBlobContainer c = Client.GetContainerReference(containerName);
             await c.CreateIfNotExistsAsync();
             await c.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
 
@@ -48,28 +49,37 @@ namespace CSC_Assignment_2.Services
             return blob.Uri.AbsoluteUri;
         }
 
-        public async Task<List<string>> GetAllImageFromContainerAsync(string containerName) {
+        public async Task<List<string>> GetAllImageFromContainerAsync(string containerName)
+        {
 
             BlobContinuationToken continuationToken = null;
 
-            CloudBlobContainer container = client.GetContainerReference(containerName);
-
-            List<IListBlobItem> blobResults = new List<IListBlobItem>();
-            List<string> urlResults = new List<string>();
-            string sasKey = Startup.Configuration.GetConnectionString("BlobSASkey");
-            do
+            try
             {
-                var response = await container.ListBlobsSegmentedAsync(continuationToken);
-                continuationToken = response.ContinuationToken;
-                blobResults = response.Results.ToList<IListBlobItem>();
+                CloudBlobContainer container = Client.GetContainerReference(containerName);
 
-                foreach (IListBlobItem blob in blobResults) {
-                    urlResults.Add(blob.Uri.AbsoluteUri + sasKey);
+                List<IListBlobItem> blobResults = new List<IListBlobItem>();
+                List<string> urlResults = new List<string>();
+                string sasKey = Startup.Configuration.GetConnectionString("BlobSASkey");
+                do
+                {
+                    var response = await container.ListBlobsSegmentedAsync(continuationToken);
+                    continuationToken = response.ContinuationToken;
+                    blobResults = response.Results.ToList<IListBlobItem>();
+
+                    foreach (IListBlobItem blob in blobResults)
+                    {
+                        urlResults.Add(blob.Uri.AbsoluteUri + sasKey);
+                    }
+
+                    return urlResults;
                 }
-
-                return urlResults;
+                while (continuationToken != null);
             }
-            while (continuationToken != null);
+            catch (Exception e)
+            {
+                return null;
+            }
         }
     }
 

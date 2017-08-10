@@ -52,8 +52,8 @@ namespace CSC_Assignment_2.Models
             var username = context.Request.Form["username"];
             var password = context.Request.Form["password"];
             var captcha = context.Request.Form["captcha"];
-
-            if (!await CheckCaptchaAsync(captcha))
+            
+            if (!String.IsNullOrEmpty(captcha) && !await CheckCaptchaAsync(captcha))
             {
                 context.Response.StatusCode = 400;
                 await context.Response.WriteAsync("Capatcha is not valid!");

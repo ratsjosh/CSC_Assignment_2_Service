@@ -41,12 +41,10 @@ namespace CSC_Assignment_2.Services
                 case EmailType.Register:
                     return "<br><br>Thank you for registering with us!<br>Please click on the link below to verify your Talent Search account e-mail address:   " +
                      "<a href =\"" + msg + "\"><strong>Verify Account</strong></a>";
-                    break;
 
                 case EmailType.CustomerSupport:
                     return "<br><br>Thank you for contacting us with your enquiry of: " + msg +
                      "<br>We will try our best to get to your enquiry as soon as possible.";
-                    break;
             }
 
             return "";
