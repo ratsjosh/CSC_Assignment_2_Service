@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.AspNetCore.Cors;
 using Stripe;
+using CSC_Assignment_2.Data;
 
 namespace CSC_Assignment_2.Controllers
 {
@@ -35,6 +36,7 @@ namespace CSC_Assignment_2.Controllers
         private readonly ILogger _logger;
         private readonly string _externalCookieScheme;
         private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext _applicationDbContext;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
@@ -44,7 +46,8 @@ namespace CSC_Assignment_2.Controllers
             IEmailSender emailSender,
             ISmsSender smsSender,
             ILoggerFactory loggerFactory,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ApplicationDbContext applicationDbContext)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -54,6 +57,7 @@ namespace CSC_Assignment_2.Controllers
             _smsSender = smsSender;
             _logger = loggerFactory.CreateLogger<AccountController>();
             _configuration = configuration;
+            _applicationDbContext = applicationDbContext;
         }
 
         // GET: /Account/Login
@@ -274,28 +278,83 @@ namespace CSC_Assignment_2.Controllers
                 return null;
             }
         }
-<<<<<<< HEAD
 
         [HttpPost]
-        public async Task<IActionResult> AccountSubscribeAsync(string planId, string userId)
+        public async Task<IActionResult> AccountSubscribeAsync(string tokenId, string planId, string userId)
         {
-            ApplicationUser user = await checkUserExistAsync(userId);
-            StripeServices ss = new StripeServices();
-            string stripeCustomerId = ss.CreateStripeCustomer(planId, user);
-            user.StripeToken = stripeCustomerId;
-            await _userManager.UpdateAsync(user);
-            return Ok();
+            try
+            {
+                ApplicationUser user = await checkUserExistAsync(userId);
+                StripeServices ss = new StripeServices();
+                string stripeCustomerId = ss.CreateStripeCustomer(tokenId, planId, user);
+                user.StripeToken = stripeCustomerId;
+                await _userManager.UpdateAsync(user);
+                return Ok();
+            }
+            catch (Exception e) {
+                return BadRequest();
+            }
         }
 
         [HttpGet]
-        public IEnumerable<StripePlan> GetAllSubscription ()
+        public async Task<IActionResult> getSubscription(string userId)
         {
-            StripeServices ss = new StripeServices();
-            return ss.GetAllPlans();
+            try
+            {
+                ApplicationUser user = await checkUserExistAsync(userId);
+                StripeServices ss = new StripeServices();
+                string stripeCustomerId = user.StripeToken;
+
+
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest();
+            }
         }
 
-=======
->>>>>>> c1313ae828a793afc62741c4b031210d0de113e0
+        [HttpPut]
+        public async Task<IActionResult> ChangeAccountSubscribeAsync(string tokenId, string planId, string userId)
+        {
+            try
+            {
+                ApplicationUser user = await checkUserExistAsync(userId);
+                string stripeCustomerId = user.StripeToken;
+                StripeServices ss = new StripeServices();
+                ss.ChangeAccountPlan(tokenId, planId, stripeCustomerId);
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public List<StripePlan> GetAllActiveSubscription ()
+        {
+            StripeServices ss = new StripeServices();
+            var allPlans = ss.GetAllPlans().ToList();
+            var notActivePlans = _applicationDbContext.SubscriptionModel.Where(t => t.IsActive == false).ToList();
+            foreach (var singleNotActivePlan in notActivePlans) {
+                    var sm = allPlans.Where(t => t.Id == singleNotActivePlan.IdToken).First();
+                    allPlans.Remove(sm);
+            }
+
+            return allPlans;
+        }
+
+
+        [HttpGet]
+        [AllowAnonymous]
+        public List<StripePlan> GetAllSubscription()
+        {
+            StripeServices ss = new StripeServices();
+            return ss.GetAllPlans().ToList();
+        }
         //
         // GET: /Account/ExternalLoginCallback
         [HttpGet]
