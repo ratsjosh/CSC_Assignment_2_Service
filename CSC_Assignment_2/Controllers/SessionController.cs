@@ -37,16 +37,17 @@ namespace CSC_Assignment_2.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateSessionExpirationByAccessTokenAsync([FromBody]TokenModel token)
+        public async Task<IActionResult> UpdateSessionExpirationByAccessTokenAsync([FromBody]LoginModel model)
         {
             if (ModelState.IsValid)
             {
-
-                List<ScanCondition> conditions = new List<ScanCondition>();
-                conditions.Add(new ScanCondition("AccessToken", ScanOperator.Equal, token.AccessToken));
-                List<LoginModel> result = await Startup._sessionDbcontext._context.ScanAsync<LoginModel>(conditions).GetRemainingAsync();
-                LoginModel model = result.FirstOrDefault();
-                await Startup._sessionDbcontext._context.SaveAsync(model);
+                Table loginModelTable = Table.LoadTable(Startup._sessionDbcontext._client, "LoginModel");
+                Document loginModel = new Document();
+                loginModel["Email"] = model.Email;
+                loginModel["AccessToken"] = model.AccessToken;
+                loginModel["ExpirationDate"] = model.ExpirationDate;
+                loginModel["SessionExpiration"] = model.SessionExpiration;
+                await loginModelTable.UpdateItemAsync(loginModel);
                 return Ok();
             }
             else
