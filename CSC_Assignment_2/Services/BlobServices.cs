@@ -40,7 +40,7 @@ namespace CSC_Assignment_2.Services
         public async Task<bool> changeContainerState(string containerName, BlobContainerPublicAccessType type) {
             try
             {
-                CloudBlobContainer c = client.GetContainerReference(containerName);
+                CloudBlobContainer c = Client.GetContainerReference(containerName);
                 await c.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = type });
 
                 return true;
@@ -54,7 +54,7 @@ namespace CSC_Assignment_2.Services
         {
             try
             {
-                CloudBlobContainer c = client.GetContainerReference(containerName);
+                CloudBlobContainer c = Client.GetContainerReference(containerName);
 
                 return (await c.GetPermissionsAsync()).PublicAccess;
             }
