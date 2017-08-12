@@ -423,7 +423,11 @@ namespace CSC_Assignment_2.Controllers
         public List<StripePlan> GetAllSubscription()
         {
             StripeServices ss = new StripeServices();
-            return ss.GetAllPlans().ToList();
+            var allPlans = ss.GetAllPlans().ToList();
+            foreach (var onePlan in allPlans) {
+                onePlan.StatementDescriptor = _applicationDbContext.SubscriptionModel.Where(t => t.IdToken == onePlan.Id).First().IsActive.ToString();
+            }
+            return allPlans;
         }
 
         //

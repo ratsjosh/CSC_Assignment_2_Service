@@ -15,14 +15,14 @@ namespace CSC_Assignment_2.Services
             StripeConfiguration.SetApiKey("sk_test_7jStegpTg5BoZBswviBiAfV0");
         }
 
-        public string CreateSubscription(int cost, string planName)
+        public string CreateSubscription(int cost, string planName, string interval)
         {
             string id = Guid.NewGuid().ToString();
             var newPlan = new StripePlanCreateOptions();
             newPlan.Id = id;
             newPlan.Amount = cost;           // all amounts on Stripe are in cents, pence, etc
             newPlan.Currency = "usd";        // "usd" only supported right now
-            newPlan.Interval = "month";      // "month" or "year"
+            newPlan.Interval = interval;      // "month" or "year"
             newPlan.Name = planName;
 
             var planService = new StripePlanService();

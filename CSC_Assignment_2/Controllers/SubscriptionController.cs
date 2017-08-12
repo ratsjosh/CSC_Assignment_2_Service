@@ -15,7 +15,7 @@ using CSC_Assignment_2.Data;
 
 namespace CSC_Assignment_2.Controllers
 {
-    //[Authorize(ActiveAuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(ActiveAuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     //[Route("api/Subscription")]
     public class SubscriptionController : Controller
     {
@@ -49,45 +49,60 @@ namespace CSC_Assignment_2.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateSubscription([FromBody]SubscriptionViewModel svm)
+        public async Task<bool> CreateSubscriptionAsync(SubscriptionViewModel svm)
         {
             try
             {
                 StripeServices ss = new StripeServices();
-                string id = ss.CreateSubscription(svm.price, svm.name);
+                string id = ss.CreateSubscription(svm.price, svm.name, svm.interval.ToLower());
                 SubscriptionModel sm = new SubscriptionModel();
                 sm.IdToken = id;
                 sm.IsActive = svm.status;
                 _applicationDbContext.SubscriptionModel.Add(sm);
-                _applicationDbContext.SaveChanges();
-                return Ok();
+                await _applicationDbContext.SaveChangesAsync();
+                return true;
 
             }
             catch (Exception e) {
-                return BadRequest();
+                return false;
             }
         }
 
         [HttpPut]
-        public IActionResult UpdateSubscription([FromBody]SubscriptionViewModel svm)
+        public async Task<bool> ChangePlanStatusAsync(string id, bool status)
+        {
+            try
+            {
+                var plan = _applicationDbContext.SubscriptionModel.Where(p => p.IdToken == id).First();
+                plan.IsActive = status;
+                _applicationDbContext.SubscriptionModel.Update(plan);
+                await _applicationDbContext.SaveChangesAsync();
+                return true;
+
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
+
+        [HttpPut]
+        public bool UpdateSubscription(string planId, string name)
         {
             StripeServices ss = new StripeServices();
             try
             {
-                SubscriptionModel sm = _applicationDbContext.SubscriptionModel.Where(t => t.IdToken == svm.id).First();
+                SubscriptionModel sm = _applicationDbContext.SubscriptionModel.Where(t => t.IdToken == planId).First();
                 if (sm != null)
                 {
-                    ss.UpdateSubscription(svm.id, svm.name);
-                    sm.IsActive = svm.status;
-                    _applicationDbContext.SubscriptionModel.Update(sm);
-                    _applicationDbContext.SaveChanges();
-                    return Ok();
+                    ss.UpdateSubscription(planId, name);
+                    return true;
                 }
                 else {
                     throw new Exception();
                 }
             } catch (Exception e) {
-                return BadRequest();
+                return false;
             }
         }
 
